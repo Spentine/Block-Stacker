@@ -279,6 +279,7 @@
         ],
       ],
       "kicks": SRSKicks,
+      "spawnPosition": [3, -1],
     },
     {
       "name": "I",
@@ -330,9 +331,9 @@
           [0, 0, 1,],
         ],
         [
-          [0, 1, 1,],
           [0, 1, 0,],
           [0, 1, 0,],
+          [1, 1, 0,],
         ],
       ],
       "kicks": SRSKicks,
@@ -431,6 +432,7 @@ class Piece { // handles kicks and rotations of piece
     // the kicks are simply too large to shove all in one line
     // to keep consistency i made every default value null
     
+    // init values
     this.name = settings.name === null ? "" : settings.name;
     this.rotations = settings.rotations === null ? [[], [], [], []] : settings.rotations;
     this.kicks = settings.kicks === null ? [
@@ -441,9 +443,10 @@ class Piece { // handles kicks and rotations of piece
     ] : settings.kicks;
     this.spawnPosition = settings.spawnPosition === null ? new Position() : new Position(settings.spawnPosition);
     
+    // convert piecegrid into a list of minos
     this.rotations = this.rotations.map((x) => {
-      let i = []
-      for (let y=0; y<x.length; y++) {
+      let i = [];
+      for (let y=0; y<x.length; y++) { // update to use .forEach
         for (let z=0; z<x[y].length; z++) {
           if (x[y][z] !== 0) {
             i.push(new Mino(new Position([z, y]), x[y][z]));
@@ -453,6 +456,8 @@ class Piece { // handles kicks and rotations of piece
       return i;
     });
     
+    // convert kicks into positions
+    this.kicks = this.kicks.map((x) => x.map((y) => y.map((z) => new Position(z))));
   }
 }
 
@@ -474,6 +479,18 @@ class RotationSystem { // rotation systems contain pieces
 }
 
 class Stacker {
+  
+  clearLines() {
+    let cleared = 0;
+    this.board.forEach((row, index) => { // for each row
+      if (row.every((p) => p !== 0)) { // if the row doesn't have any empty spaces
+        cleared += 1;
+        this.board.splice(index, 1); // delete the row
+        this.board.splice(0, 0, Array.from({ length: this.c.width }, () => 0)); // insert empty row at top of board
+      }
+    });
+    return cleared;
+  }
   
   bag(pieces=this.c.rotationSystem.pieceNames) {
     while (pieces.length > 0) {
@@ -509,6 +526,13 @@ class Stacker {
     
     // moves piece to starting position using various offsets and initialize other values
     this.movePiece(new Position([pieceData.spawnPosition.x,pieceData.spawnPosition.y+this.c.height-this.c.spawnHeight]),0,pieceName);
+    
+    if (!this.pieceValid()) {
+      this.playing = false;
+      return false;
+    }
+    
+    return true;
   }
   
   newPiece() {
@@ -522,6 +546,7 @@ class Stacker {
       this.board[mino.position.y][mino.position.x] = mino.texture; // set the mino position to the texture
     });
     
+    this.clearLines(); // clear lines
     this.newPiece(); // load next piece
     this.hold.did = 0; // reset hold disable   
   }
@@ -550,24 +575,52 @@ class Stacker {
     return false;
   }
   
+  moveIfPossible(position=new Position([0, 0])) {
+    return game.positionIfPossible(game.piece.position.addPositionReturn(position));
+  }
+  
   DASMove(offset) {
     let i = true;
-    while (i) {
-      i = this.positionIfPossible(this.piece.position.addPositionReturn(offset));
+    while (i) { // while it can move
+      i = this.positionIfPossible(this.piece.position.addPositionReturn(offset)); // move it it can
     }
   }
   
+  holdPiece() {
+    const prevhold = this.hold.pieceName; // get held piece
+    this.hold.pieceName = this.piece.name; // current piece is held
+    this.hold.did += 1; // incement amount of times held
+    
+    if (prevhold === null) { // if we were holding nothing
+      this.newPiece(); // generate a new piece
+    } else { // if we were holding something
+      this.generatePiece(prevhold); // generate what was being held
+    }
+    return true; // successful
+  }
+  
+  rotate(rotation) { // rotation isn't delta
+    for (const kick of this.c.rotationSystem[this.piece.name].kicks[this.piece.rotation][rotation]) {
+      const pos = this.piece.position.addPositionReturn(kick);
+      if (this.pieceValid(pos, rotation)) {
+        this.movePiece(pos, rotation);
+        return true;  // Return true if any kick is valid
+      }
+    }
+    return false;
+  }
+  
   consoleRender() {
-    let output = [];
+    let output = []; // it's a list so that the current piece minos can modify it
     
     this.board.forEach((i, index) => {
       if (index >= this.c.height - this.c.renderHeight) {
         output.push("|");
         i.forEach((j) => {
           if (j === 0) {
-            output.push("  ");
+            output.push("  "); // nothing
           } else {
-            output.push("[]");
+            output.push("[]"); // block
           }
         });
         output.push("|\n");
@@ -575,16 +628,17 @@ class Stacker {
     });
     
     this.piece.minos.forEach((i) => {
-      if (i.position.y >= this.c.height - this.c.renderHeight) {
+      if (i.position.y >= this.c.height - this.c.renderHeight) { // if in render bounds
         output[1 + i.position.x + 12 * (i.position.y - this.c.height + this.c.renderHeight)] = "()";
       }
     });
     
-    output = output.join('');
+    output = output.join(''); // turn list into string
     
-    output += "NEXT: ";
+    output += "HOLD: " + this.hold.pieceName;
+    output += "\nNEXT: ";
     this.next.forEach((i) => {
-      output += i;
+      output += i; // next pieces
     });
     
     output += "\nSCORE: " + this.score;
@@ -646,10 +700,11 @@ class Stacker {
     // this code does some dark magic that initializes a board with a width and height
     this.board = Array.from({ length: this.c.height }, () => Array.from({ length: this.c.width }, () => 0));
     this.next = [];
-    this.hold = {"pieceName": "", "did": 0};
+    this.hold = {"pieceName": null, "did": 0};
     this.score = 0;
     this.time = 0;
     this.piece = null;
+    this.playing = true; // true: game still going; false: game end
     
     this.updateNext();
     this.newPiece();
