@@ -382,6 +382,10 @@ class Position {
   clone() {
     return new Position([this.x, this.y]);
   }
+  
+  addPositionReturn(pos) {
+    return new Position([this.x + pos.x, this.y + pos.y]);
+  }
 }
 
 class Mino {
@@ -485,13 +489,14 @@ class Stacker {
     }
   }
   
-  movePiece(position) {
-    const pieceName = this.piece.name;
+  movePiece(position=this.piece.position, rotation=this.piece.rotation, pieceName=this.piece.name) {
     const pieceData = this.c.rotationSystem[pieceName];
-    this.piece.position = position;
+    this.piece.position = position; // set position of the piece
+    this.piece.rotation = rotation; // set rotation of the piece
+    this.piece.name = pieceName; // sets name of the piece
     
     // offsets piece positions so that the piece is at the correct location 
-    this.piece.minos = pieceData.rotations[this.piece.rotation].map((x) => {
+    this.piece.minos = pieceData.rotations[rotation].map((x) => {
       let p = x.clone(); // clones mino position
       p.addPosition(this.piece.position); // offsets by piece position
       return p;
@@ -501,11 +506,9 @@ class Stacker {
   generatePiece(pieceName) {
     this.piece = {}; // initializes a dictionary
     const pieceData = this.c.rotationSystem[pieceName]; // gets piece data for spawn offset
-    this.piece.rotation = 0; // initial rotation
-    this.piece.name = pieceName; // sets the name of the piece
     
-    // moves piece to starting position using various offsets
-    this.movePiece(new Position([pieceData.spawnPosition.x, pieceData.spawnPosition.y + this.c.height - this.c.spawnHeight]));
+    // moves piece to starting position using various offsets and initialize other values
+    this.movePiece(new Position([pieceData.spawnPosition.x,pieceData.spawnPosition.y+this.c.height-this.c.spawnHeight]),0,pieceName);
   }
   
   newPiece() {
@@ -531,10 +534,62 @@ class Stacker {
     return this.board[position.y][position.x];
   }
   
-  pieceValid(position, rotation=this.piece.rotation, piece=this.piece.name) { // check if a piece in a certain position is valid
-    return this.c.rotationSystem[piece].rotations[rotation].every((mino) => { // for each mino in the piece, check if every mino
+  // check if a piece in a certain position is valid
+  pieceValid(position=this.piece.position, rotation=this.piece.rotation, pieceName=this.piece.name) {
+    return this.c.rotationSystem[pieceName].rotations[rotation].every((mino) => { // for each mino in the piece, check if every mino
       return this.boardPosition(mino.addPositionReturn(position)) === 0; // isn't intersecting a block (0), and return this value
     });
+  }
+  
+  // move current piece to a position if possible
+  positionIfPossible(position=this.piece.position, rotation=this.piece.rotation, pieceName=this.piece.name) {
+    if (this.pieceValid(position, rotation, pieceName)) {
+      this.movePiece(position, rotation, pieceName);
+      return true;
+    }
+    return false;
+  }
+  
+  DASMove(offset) {
+    let i = true;
+    while (i) {
+      i = this.positionIfPossible(this.piece.position.addPositionReturn(offset));
+    }
+  }
+  
+  consoleRender() {
+    let output = [];
+    
+    this.board.forEach((i, index) => {
+      if (index >= this.c.height - this.c.renderHeight) {
+        output.push("|");
+        i.forEach((j) => {
+          if (j === 0) {
+            output.push("  ");
+          } else {
+            output.push("[]");
+          }
+        });
+        output.push("|\n");
+      }
+    });
+    
+    this.piece.minos.forEach((i) => {
+      if (i.position.y >= this.c.height - this.c.renderHeight) {
+        output[1 + i.position.x + 12 * (i.position.y - this.c.height + this.c.renderHeight)] = "()";
+      }
+    });
+    
+    output = output.join('');
+    
+    output += "NEXT: ";
+    this.next.forEach((i) => {
+      output += i;
+    });
+    
+    output += "\nSCORE: " + this.score;
+    
+    return output;
   }
   
   constructor(settings) {
@@ -560,7 +615,8 @@ class Stacker {
         // dimensions
         this.c.width = settings.dimensions.width;
         this.c.height = settings.dimensions.height;
-        this.c.spawnHeight = settings.dimensions.spawnHeight;
+        this.c.spawnHeight = settings.dimensions.spawnHeight; // from bottom
+        this.c.renderHeight = settings.dimensions.renderHeight; // from bottom
         
         // game settings
         this.RNG = new RNG(settings.gameSettings.seed); // not constant
@@ -615,7 +671,8 @@ const settings = {
   "dimensions": {
     "width": 10,
     "height": 40,
-    "spawnHeight": 22
+    "spawnHeight": 22, // from bottom
+    "renderHeight": 25, // from bottom
   },
   "gameSettings": {
     "seed": 12345,
