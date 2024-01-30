@@ -343,24 +343,24 @@
       "name": "T",
       "rotations": [
         [
-          [0, 1, 0,],
-          [1, 1, 1,],
-          [0, 0, 0,],
+          [-3,  1, -3,],
+          [ 1,  1,  1,],
+          [-1,  0, -1,],
         ],
         [
-          [0, 1, 0,],
-          [0, 1, 1,],
-          [0, 1, 0,],
+          [-3,  1, -2,],
+          [ 0,  1,  1,],
+          [-1,  1,  -1,],
         ],
         [
-          [0, 0, 0,],
-          [1, 1, 1,],
-          [0, 1, 0,],
+          [-2,  0, -2,],
+          [ 1,  1,  1,],
+          [-1,  1, -1,],
         ],
         [
-          [0, 1, 0,],
-          [1, 1, 0,],
-          [0, 1, 0,],
+          [-2,  1, -3,],
+          [ 1,  1,  0,],
+          [-1,  1, -1,],
         ],
       ],
       "kicks": SRSKicks,
@@ -443,16 +443,39 @@ class Piece { // handles kicks and rotations of piece
     ] : settings.kicks;
     this.spawnPosition = settings.spawnPosition === null ? new Position() : new Position(settings.spawnPosition);
     
+    this.spins = [{}, {}, {}, {}];
+    
     // convert piecegrid into a list of minos
-    this.rotations = this.rotations.map((x) => {
+    this.rotations = this.rotations.map((x, index) => {
       let i = [];
+      let required = [];
+      let spin = [];
+      let minispin = [];
       for (let y=0; y<x.length; y++) { // update to use .forEach
         for (let z=0; z<x[y].length; z++) {
-          if (x[y][z] !== 0) {
+          let gridspot = x[y][z];
+          if (gridspot === -1) { // required for spins
+            required.push(new Position([z, y]));
+          } else if (gridspot === -2) { // full t spin
+            spin.push(new Position([z, y]));
+          } else if (gridspot === -3) { // mini t spin
+            minispin.push(new Position([z, y]));
+          } else if (gridspot !== 0) {
             i.push(new Mino(new Position([z, y]), x[y][z]));
           }
         }
       };
+      
+      if (required.length !== 0) {
+        this.spins[index].required = required;
+      }
+      if (spin.length !== 0) {
+        this.spins[index].spin = spin;
+      }
+      if (minispin.length !== 0) {
+        this.spins[index].minispin = minispin;
+      }
+      
       return i;
     });
     
@@ -479,6 +502,14 @@ class RotationSystem { // rotation systems contain pieces
 }
 
 class Stacker {
+  
+  boardPosition(position) {
+    // if out of bounds return -1
+    if (position.x < 0 || position.x >= this.c.width || position.y < 0 || position.y >= this.c.height) {
+      return -1;
+    }
+    return this.board[position.y][position.x];
+  }
   
   clearLines() {
     let cleared = 0;
@@ -527,6 +558,13 @@ class Stacker {
     // moves piece to starting position using various offsets and initialize other values
     this.movePiece(new Position([pieceData.spawnPosition.x,pieceData.spawnPosition.y+this.c.height-this.c.spawnHeight]),0,pieceName);
     
+    /*
+    0: no spin
+    1: mini spin
+    2: full spin
+    */
+    this.piece.spin = 0;
+    
     if (!this.pieceValid()) {
       this.playing = false;
       return false;
@@ -551,19 +589,58 @@ class Stacker {
     this.hold.did = 0; // reset hold disable   
   }
   
-  boardPosition(position) {
-    // if out of bounds return -1
-    if (position.x < 0 || position.x >= this.c.width || position.y < 0 || position.y >= this.c.height) {
-      return -1;
-    }
-    return this.board[position.y][position.x];
-  }
-  
   // check if a piece in a certain position is valid
   pieceValid(position=this.piece.position, rotation=this.piece.rotation, pieceName=this.piece.name) {
     return this.c.rotationSystem[pieceName].rotations[rotation].every((mino) => { // for each mino in the piece, check if every mino
       return this.boardPosition(mino.addPositionReturn(position)) === 0; // isn't intersecting a block (0), and return this value
     });
+  }
+  
+  // is the position a valid position for spins
+  isSpinPosition(position=this.piece.position, rotation=this.piece.rotation, pieceName=this.piece.name) {
+    const spinData = this.c.rotationSystem[pieceName].spins[rotation];
+    
+    if (Object.keys(spinData).length === 0) { // no spin data
+      this.piece.spin = 0;
+      return false;
+    }
+    
+    if (!spinData.required.every((req) => this.boardPosition(position.addPositionReturn(req)) !== 0)) { // required blocks filled
+      this.piece.spin = 0;
+      return false;
+    }
+    
+    if (spinData.spin !== undefined) {
+      for (const spin of spinData.spin) {
+        if (this.boardPosition(position.addPositionReturn(spin)) !== 0) { // fills in a spin block
+          this.piece.spin = 2; // full spin
+          return true;
+        }
+      }
+    }
+    
+    if (spinData.minispin !== undefined) {
+      let mini = 0;
+      for (const minipos of spinData.minispin) {
+        if (this.boardPosition(position.addPositionReturn(minipos)) !== 0) {
+          mini += 1; // count mini blocks filled
+        }
+      }
+      
+      if (mini === spinData.minispin.length && spinData.minispin.length !== 1) { // if every mini block is filled
+        this.piece.spin = 2; // full spin
+        console.log(mini);
+        return true;
+      } else if (mini === 0) { // if none are filled
+        this.piece.spin = 0; // no spin
+        return false;
+      } else { // if some are filled
+        this.piece.spin = 1; // mini spin
+        return true;
+      }
+    }
+    
+    return false; // catch all
   }
   
   // move current piece to a position if possible
@@ -582,7 +659,7 @@ class Stacker {
   DASMove(offset) {
     let i = true;
     while (i) { // while it can move
-      i = this.positionIfPossible(this.piece.position.addPositionReturn(offset)); // move it it can
+      i = this.positionIfPossible(this.piece.position.addPositionReturn(offset)); // move while it can
     }
   }
   
@@ -604,6 +681,7 @@ class Stacker {
       const pos = this.piece.position.addPositionReturn(kick);
       if (this.pieceValid(pos, rotation)) {
         this.movePiece(pos, rotation);
+        this.isSpinPosition();
         return true;  // Return true if any kick is valid
       }
     }
@@ -636,12 +714,13 @@ class Stacker {
     output = output.join(''); // turn list into string
     
     output += "HOLD: " + this.hold.pieceName;
-    output += "\nNEXT: ";
+    output += " | NEXT: ";
     this.next.forEach((i) => {
       output += i; // next pieces
     });
     
     output += "\nSCORE: " + this.score;
+    output += " | SPIN: " + this.piece.spin;
     
     return output;
   }
@@ -730,7 +809,7 @@ const settings = {
     "renderHeight": 25, // from bottom
   },
   "gameSettings": {
-    "seed": 12345,
+    "seed": 1,
     "rotationSystem": "SRS",
     "gravity": 0.00002, // minos fallen per ms
     "gravityIncrease": 0.000000007, // multiply by elapsed ms and add to gravity
