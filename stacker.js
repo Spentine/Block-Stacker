@@ -58,6 +58,65 @@
     ],
   ]
   
+  const SRSTKicks = [
+    [
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [-1, 0], [-1, -1], [0, 2], {"position": [-1, 2], "spin": 2},
+      ],
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [1, 0], [1, -1], [0, 2], {"position": [1, 2], "spin": 2},
+      ],
+    ],
+    [
+      [
+        [0, 0], [1, 0], [1, 1], [0, -2], [1, -2],
+      ],
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [1, 0], [1, 1], [0, -2], [1, -2],
+      ],
+      [
+        [0, 0], 
+      ],
+    ],
+    [
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [-1, 0], [-1, -1], [0, 2], {"position": [-1, 2], "spin": 2},
+      ],
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [1, 0], [1, -1], [0, 2], {"position": [1, 2], "spin": 2},
+      ],
+    ],
+    [
+      [
+        [0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2], 
+      ],
+      [
+        [0, 0], 
+      ],
+      [
+        [0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2], 
+      ],
+      [
+        [0, 0], 
+      ],
+    ],
+  ]
+  
   const noKicks = [
     [
       [
@@ -363,7 +422,7 @@
           [-1,  1, -1,],
         ],
       ],
-      "kicks": SRSKicks,
+      "kicks": SRSTKicks,
       "spawnPosition": [3, -1],
     },
   ]
@@ -386,6 +445,26 @@ class Position {
   
   addPositionReturn(pos) {
     return new Position([this.x + pos.x, this.y + pos.y]);
+  }
+}
+
+class Kick {
+  constructor(position=new Position(), spin=2) {
+    this.position = position;
+    this.spin = spin;
+  }
+  
+  add(pos) {
+    this.position.x += pos.x;
+    this.position.y += pos.y;
+  }
+  
+  clone() {
+    return new Kick(this.position, this.spin);
+  }
+  
+  addPositionReturn(pos) {
+    return new Kick(this.position.addPositionReturn(pos), this.spin);
   }
 }
 
@@ -480,7 +559,13 @@ class Piece { // handles kicks and rotations of piece
     });
     
     // convert kicks into positions
-    this.kicks = this.kicks.map((x) => x.map((y) => y.map((z) => new Position(z))));
+    this.kicks = this.kicks.map((x) => x.map((y) => y.map((z) => {
+      if (Array.isArray(z)) {
+        return new Kick(new Position(z), 0);
+      } else {
+        return new Kick(new Position(z.position), z.kick);
+      }
+    })));
   }
 }
 
@@ -678,10 +763,14 @@ class Stacker {
   
   rotate(rotation) { // rotation isn't delta
     for (const kick of this.c.rotationSystem[this.piece.name].kicks[this.piece.rotation][rotation]) {
-      const pos = this.piece.position.addPositionReturn(kick);
+      const pos = this.piece.position.addPositionReturn(kick.position);
       if (this.pieceValid(pos, rotation)) {
         this.movePiece(pos, rotation);
-        this.isSpinPosition();
+        if (kick.spin !== 0) {
+          this.piece.spin = kick.spin;
+        } else {
+          this.isSpinPosition();
+        }
         return true;  // Return true if any kick is valid
       }
     }
@@ -707,7 +796,7 @@ class Stacker {
     
     this.piece.minos.forEach((i) => {
       if (i.position.y >= this.c.height - this.c.renderHeight) { // if in render bounds
-        output[1 + i.position.x + 12 * (i.position.y - this.c.height + this.c.renderHeight)] = "()";
+        output[1 + i.position.x + (this.c.width + 2) * (i.position.y - this.c.height + this.c.renderHeight)] = "()";
       }
     });
     
