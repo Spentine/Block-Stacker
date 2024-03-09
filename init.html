@@ -3,16 +3,8 @@
 <html>
 
 <head>
-<script src="stacker.js"></script>
-<script>
-function update() {
-  document.getElementById('render').innerHTML = game.consoleRender();
-} 
-
-addEventListener("DOMContentLoaded", (event) => {
-  update();
-});
-</script>
+<script src="stacker/stacker.js" type=module></script>
+<script src="main.js" type=module></script>
 <style>
 body {
   background-color: #000;
@@ -37,29 +29,29 @@ pre {
 
 <body>
 
-<button onclick="update();"> update </button>
+<button id=update> update </button>
 <pre id="render">
 render
 </pre>
-<button onclick="game.DASMove(new Position([-1, 0])); update();"> DAS left </button>
-<button onclick="game.moveIfPossible(new Position([-1, 0])); update();"> left </button>
-<button onclick="game.moveIfPossible(new Position([1, 0])); update();"> right </button>
-<button onclick="game.DASMove(new Position([1, 0])); update();"> DAS right </button>
+<button id=DASleft> DAS left </button>
+<button id=left> left </button>
+<button id=right> right </button>
+<button id=DASright> DAS right </button>
 
 <br>
 
-<button onclick="game.DASMove(new Position([0, 1])); game.placePiece(); update();"> hard drop </button>
-<button onclick="game.moveIfPossible(new Position([0, 1])); update();"> soft drop </button>
-<button onclick="game.DASMove(new Position([0, 1])); update();"> sonic drop </button>
+<button id=hardDrop> hard drop </button>
+<button id=softDrop> soft drop </button>
+<button id=sonicDrop> sonic drop </button>
 
 <br>
 
-<button onclick="game.rotate((game.piece.rotation + 3) % 4); update();"> ccw </button>
-<button onclick="game.rotate((game.piece.rotation + 2) % 4); update();"> 180 </button>
-<button onclick="game.rotate((game.piece.rotation + 1) % 4); update();"> cw </button>
+<button id=ccw> ccw </button>
+<button id=r180> 180 </button>
+<button id=cw> cw </button>
 
 <br>
 
-<button onclick="game.holdPiece(); update();"> hold </button>
+<button id=hold> hold </button>
 </body>
 </html>
