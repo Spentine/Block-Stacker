@@ -383,6 +383,7 @@ class Stacker {
     
     output += "\nSCORE: " + this.score;
     output += " | SPIN: " + this.piece.spin;
+    output += " | PlAYING: " + this.playing;
     
     return output;
   }
