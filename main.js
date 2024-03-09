@@ -37,7 +37,7 @@ const settings = {
 
 var game = new Stacker(settings);
 
-const buttonMap = {
+const buttonMap = { // map button IDs to functions
   DASleft: () => game.DASMove(new Position([-1, 0])),
   left: () => game.moveIfPossible(new Position([-1, 0])),
   right: () => game.moveIfPossible(new Position([1, 0])),
@@ -59,11 +59,11 @@ const buttonMap = {
   update: () => update()
 };
 
-// Assuming you have an element lookup function to get buttons by id
+// handle button clicks
 function handleButtonClick(buttonId) {
   if (buttonMap[buttonId]) {
     buttonMap[buttonId]();
-    update(); // Call update function after each button action
+    update(); // update after each button click
   }
 }
 
