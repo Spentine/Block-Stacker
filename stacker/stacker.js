@@ -453,6 +453,12 @@ class Stacker {
     this.updateNext();
     
   }
+  
+  tick(keys, timeAdvance) {
+    
+    
+    
+  }
 }
 
 export { Position, Kick, Mino, Piece, RotationSystem, Stacker };

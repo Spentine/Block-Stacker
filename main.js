@@ -35,7 +35,7 @@ const settings = {
   },
 };
 
-var game = new Stacker(settings);
+const game = new Stacker(settings);
 
 const buttonMap = { // map button IDs to functions
   DASleft: () => game.DASMove(new Position([-1, 0])),
@@ -68,7 +68,10 @@ function handleButtonClick(buttonId) {
 }
 
 function update() {
-  document.getElementById('render').innerHTML = game.consoleRender();
+  const cRender = document.getElementById('render');
+  const ctx = cRender.getContext("2d");
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, 200, 400);
 } 
 
 Object.keys(buttonMap).forEach(buttonId => {
@@ -78,3 +81,54 @@ Object.keys(buttonMap).forEach(buttonId => {
 addEventListener("DOMContentLoaded", (event) => {
   update();
 });
+
+const keyMappings = {
+  "ArrowLeft": "left",
+  "ArrowRight": "right",
+  "ArrowDown": "softDrop",
+  "Space": "hardDrop",
+  "ArrowUp": "CW",
+  "KeyX": "CW",
+  "KeyZ": "CCW",
+  "KeyA": "180",
+  "KeyC": "hold",
+};
+const keyMappingKeys = Object.keys(keyMappings);
+
+const keyDetect = {};
+const keyLength = {};
+var lastFrame = Date.now();
+
+for (let i in Object.keys(keyMappings)) {
+  keyDetect[keyMappingKeys[i]] = null;
+  keyLength[keyMappingKeys[i]] = null;
+}
+
+function tickFrame() {
+  
+  for (let i in Object.keys(keyDetect)) {
+    i = keyMappingKeys[i]
+    keyLength[i] = keyDetect[i] === null ? null : Date.now() - keyDetect[i]
+  }
+  
+  game.tick(keyLength, Date.now() - lastFrame);
+  // update();
+  lastFrame = Date.now();
+  
+  
+  window.requestAnimationFrame(tickFrame);
+}
+
+function keyDown(e) {
+  if (!e.repeat) {
+    keyDetect[e.code] = Date.now();
+  }
+}
+
+function keyUp(e) {
+  keyDetect[e.code] = null;
+}
+
+window.requestAnimationFrame(tickFrame);
+document.onkeydown = keyDown;
+document.onkeyup = keyUp;
