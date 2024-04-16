@@ -456,7 +456,8 @@ class Stacker {
   
   tick(keys, timeAdvance) {
     
-    
+    // console.log(keys);
+    // console.log(timeAdvance);
     
   }
 }

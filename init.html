@@ -3,59 +3,16 @@
 <html>
 
 <head>
+
 <script src="stacker/stacker.js" type=module></script>
 <script src="main.js" type=module></script>
-<style>
-body {
-  background-color: #000;
-}
+<link rel="stylesheet" href="style.css">
 
-p, h1, h2, h3 {
-  color: #ffffff;
-}
-
-button {
-  color: #ffffff;
-  background-color: #333333;
-  font-size: 30px;
-  font-family: Sans-Serif;
-}
-
-pre {
-  font-size: 30px;
-  color: #ffffff;
-}
-</style>
+</head>
 
 <body>
 
-<button id=update> update </button>
+<canvas id="render"></canvas>
 
-<br>
-
-<canvas id="render" width="200" height="400"></canvas>
-
-<br>
-
-<button id=DASleft> DAS left </button>
-<button id=left> left </button>
-<button id=right> right </button>
-<button id=DASright> DAS right </button>
-
-<br>
-
-<button id=hardDrop> hard drop </button>
-<button id=softDrop> soft drop </button>
-<button id=sonicDrop> sonic drop </button>
-
-<br>
-
-<button id=ccw> ccw </button>
-<button id=r180> 180 </button>
-<button id=cw> cw </button>
-
-<br>
-
-<button id=hold> hold </button>
 </body>
 </html>

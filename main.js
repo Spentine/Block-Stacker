@@ -37,46 +37,12 @@ const settings = {
 
 const game = new Stacker(settings);
 
-const buttonMap = { // map button IDs to functions
-  DASleft: () => game.DASMove(new Position([-1, 0])),
-  left: () => game.moveIfPossible(new Position([-1, 0])),
-  right: () => game.moveIfPossible(new Position([1, 0])),
-  DASright: () => game.DASMove(new Position([1, 0])),
-
-  hardDrop: () => {
-    game.DASMove(new Position([0, 1]));
-    game.placePiece();
-  },
-  softDrop: () => game.moveIfPossible(new Position([0, 1])),
-  sonicDrop: () => game.DASMove(new Position([0, 1])),
-
-  ccw: () => game.rotate((game.piece.rotation + 3) % 4),
-  r180: () => game.rotate((game.piece.rotation + 2) % 4),
-  cw: () => game.rotate((game.piece.rotation + 1) % 4),
-
-  hold: () => game.holdPiece(),
-  
-  update: () => update()
-};
-
-// handle button clicks
-function handleButtonClick(buttonId) {
-  if (buttonMap[buttonId]) {
-    buttonMap[buttonId]();
-    update(); // update after each button click
-  }
-}
-
 function update() {
   const cRender = document.getElementById('render');
   const ctx = cRender.getContext("2d");
-  ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, 200, 400);
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0, 0, 100, 100);
 } 
-
-Object.keys(buttonMap).forEach(buttonId => {
-  document.getElementById(buttonId).addEventListener('click', () => handleButtonClick(buttonId));
-});
 
 addEventListener("DOMContentLoaded", (event) => {
   update();
@@ -118,6 +84,8 @@ function tickFrame() {
   
   window.requestAnimationFrame(tickFrame);
 }
+
+// listeners and stuff
 
 function keyDown(e) {
   if (!e.repeat) {
