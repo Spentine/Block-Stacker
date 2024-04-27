@@ -39,9 +39,12 @@ const game = new Stacker(settings);
 
 function update() {
   const cRender = document.getElementById('render');
+  cRender.width = window.innerWidth;
+  cRender.height = window.innerHeight;
   const ctx = cRender.getContext("2d");
-  ctx.fillStyle = "#333";
-  ctx.fillRect(0, 0, 100, 100);
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, cRender.width, cRender.height);
+  
 } 
 
 addEventListener("DOMContentLoaded", (event) => {
@@ -78,7 +81,7 @@ function tickFrame() {
   }
   
   game.tick(keyLength, Date.now() - lastFrame);
-  // update();
+  update();
   lastFrame = Date.now();
   
   
