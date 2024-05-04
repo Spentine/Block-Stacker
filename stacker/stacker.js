@@ -1,5 +1,7 @@
 import { SRS } from "./rs.js";
 
+console.log("Stacker Initializing")
+
 class Position {
   /*
     specifies many things, e.g.,

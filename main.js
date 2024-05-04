@@ -1,4 +1,6 @@
 import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/stacker.js"
+import { render } from "./render.js"
+import { InputHandler } from "./input.js"
 
 const settings = {
   "ver": 1, // settings version for backwards compatibility
@@ -35,22 +37,6 @@ const settings = {
   },
 };
 
-const game = new Stacker(settings);
-
-function update() {
-  const cRender = document.getElementById('render');
-  cRender.width = window.innerWidth;
-  cRender.height = window.innerHeight;
-  const ctx = cRender.getContext("2d");
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, cRender.width, cRender.height);
-  
-} 
-
-addEventListener("DOMContentLoaded", (event) => {
-  update();
-});
-
 const keyMappings = {
   "ArrowLeft": "left",
   "ArrowRight": "right",
@@ -62,44 +48,29 @@ const keyMappings = {
   "KeyA": "180",
   "KeyC": "hold",
 };
-const keyMappingKeys = Object.keys(keyMappings);
 
-const keyDetect = {};
-const keyLength = {};
+const game = new Stacker(settings);
+const inputHandler = new InputHandler(keyMappings);
+
+function update() {
+  render();
+} 
+
+addEventListener("DOMContentLoaded", (event) => {
+  update();
+});
+
 var lastFrame = Date.now();
 
-for (let i in Object.keys(keyMappings)) {
-  keyDetect[keyMappingKeys[i]] = null;
-  keyLength[keyMappingKeys[i]] = null;
-}
-
 function tickFrame() {
-  
-  for (let i in Object.keys(keyDetect)) {
-    i = keyMappingKeys[i]
-    keyLength[i] = keyDetect[i] === null ? null : Date.now() - keyDetect[i]
-  }
-  
-  game.tick(keyLength, Date.now() - lastFrame);
+  // console.log(inputHandler.getInputs());
+  game.tick(inputHandler.getInputs(), Date.now() - lastFrame);
   update();
   lastFrame = Date.now();
-  
   
   window.requestAnimationFrame(tickFrame);
 }
 
-// listeners and stuff
-
-function keyDown(e) {
-  if (!e.repeat) {
-    keyDetect[e.code] = Date.now();
-  }
-}
-
-function keyUp(e) {
-  keyDetect[e.code] = null;
-}
-
 window.requestAnimationFrame(tickFrame);
-document.onkeydown = keyDown;
-document.onkeyup = keyUp;
+document.onkeydown = function (e) { inputHandler.keyDown(e) };
+document.onkeyup = function (e) { inputHandler.keyUp(e) };
