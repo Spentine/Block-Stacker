@@ -1,5 +1,5 @@
 import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/stacker.js"
-import { render } from "./render.js"
+import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
 
 const settings = {
@@ -51,20 +51,24 @@ const keyMappings = {
 
 const game = new Stacker(settings);
 const inputHandler = new InputHandler(keyMappings);
+const renderer = new GameRenderer();
+
+function DOMLoaded(event) {
+  const cRender = document.getElementById('render');
+  renderer.useCanvas(cRender);
+}
 
 function update() {
-  render();
-} 
-
-addEventListener("DOMContentLoaded", (event) => {
-  update();
-});
+  renderer.renderScreen();
+}
 
 var lastFrame = Date.now();
 
 function tickFrame() {
-  // console.log(inputHandler.getInputs());
-  game.tick(inputHandler.getInputs(), Date.now() - lastFrame);
+  
+  const inputs = inputHandler.getInputs();
+  // console.log(inputs);
+  game.tick(inputs, Date.now() - lastFrame);
   update();
   lastFrame = Date.now();
   
@@ -74,3 +78,4 @@ function tickFrame() {
 window.requestAnimationFrame(tickFrame);
 document.onkeydown = function (e) { inputHandler.keyDown(e) };
 document.onkeyup = function (e) { inputHandler.keyUp(e) };
+addEventListener("DOMContentLoaded", DOMLoaded);

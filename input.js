@@ -24,16 +24,20 @@ class InputHandler {
   getInputs() {
     
     for (let i in this.keyMapKeys) {
-      this.inputs[keyMap[this.keyMapKeys[i]]] = null;
+      this.inputs[this.keyMap[this.keyMapKeys[i]]] = null;
     }
     
     for (let i in this.keyMapKeys) {
-      i = this.keyMapKeys[i]
+      i = this.keyMapKeys[i];
+      let j = this.keyMap[i];
       
       // ternary statement separated for brevity
       
-      if (this.directInterface[i] !== null) {
-        this.inputs[this.keyMap[i]] = Date.now() - this.directInterface[i];
+      if (this.directInterface[i] !== null) { // if it's not undefined (pushed down)
+        const holdTime = Date.now() - this.directInterface[i]; // amount of time held down
+        if (this.inputs[j] === null || this.inputs[j] > holdTime) { // if it's undefined or greater than holdTime
+          this.inputs[j] = holdTime; // set it to holdTime
+        }
       }
     }
     return this.inputs;
