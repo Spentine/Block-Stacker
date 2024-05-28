@@ -20,10 +20,32 @@ function addSkin(skinName, skinPaths, connected) {
   skins[skinName] = skin;
 }
 
-addSkin("TETR.IO", {
+addSkin("TETR.IO Connected", {
   "minos": {"src": "assets/inGame/TETRIOconnectedMinos.png", "connected": true, "blockSize": 96},
   "ghost": {"src": "assets/inGame/TETRIOconnectedGhost.png", "connected": true, "blockSize": 96},
 });
+
+// map tilemap modes to block sets
+const modeBlockSetMap = {
+  "connectedMinos_0": "minos",
+  "connectedGhost_0": "ghost",
+}
+
+class blockTileMap {
+  constructor(skin, blockSize, mode) {
+    this.skin = skin; // skin image
+    this.blockSize = blockSize; // blocksize
+    this.mode = mode;
+    /*
+      list of modes:
+      "connectedMinos_0": default connected layout for regular minos
+      "connectedGhost_0": default connected layout for ghost minos
+    */
+    this.assignment = modeBlockSetMap[mode];
+  }
+  
+  
+}
 
 class GameRenderer {
   constructor() {
@@ -41,11 +63,11 @@ class GameRenderer {
     this.canvas.height = window.innerHeight;
     this.ctx.fillStyle = "#111";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    // this.renderGameBoard(0, "TETR.IO");
+    // this.renderGameBoard(0, "TETR.IO Connected");
   }
   
   renderGameBoard(game, skinName) {
-    const skin = skins[skinName];
+    const skin = skins[skinName]; // for easier referencing
     this.ctx.drawImage(skin.minos.src, 0, 0);
   }
 }
