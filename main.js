@@ -63,14 +63,17 @@ function update() {
 }
 
 var lastFrame = Date.now();
+var lastInputs = inputHandler.getInputs();
 
 function tickFrame() {
   
   const inputs = inputHandler.getInputs();
   // console.log(inputs);
-  game.tick(inputs, Date.now() - lastFrame);
+  game.tick(inputs, lastInputs, Date.now() - lastFrame);
+  console.log(game.consoleRender());
   update();
   lastFrame = Date.now();
+  lastInputs = structuredClone(inputs);
   
   window.requestAnimationFrame(tickFrame);
 }

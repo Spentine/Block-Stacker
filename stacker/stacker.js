@@ -122,9 +122,13 @@ class Piece { // handles kicks and rotations of piece
             case -3: // mini t spin
               minispin.push(new Position([z, y]));
               break;
-            case 1:
-              minos.push(new Mino(new Position([z, y]), x[y][z]));
+            case 0:
+              // do nothing
               break;
+            default:
+              minos.push(
+                new Mino(new Position([z, y]), x[y][z]), // position
+              );
           }
       }));
       
@@ -456,10 +460,51 @@ class Stacker {
     
   }
   
-  tick(keys, timeAdvance) {
+  tick(keys, prevKeys, timeAdvance) {
+    
+    /*
+    if (JSON.stringify(keys) != JSON.stringify(prevKeys)) {
+      console.log(keys);
+    }
+    */
     
     // console.log(keys);
     // console.log(timeAdvance);
+    
+    if (keys.left || keys.right) { // if a direction key is pressed
+      
+      if (keys.left < keys.right) { // prioritize key that has been pressed most recently (less time)
+        var direction = {"key": "right", "number": 1};
+      } else {
+        var direction = {"key": "left", "number": -1};
+      }
+      
+      if (!prevKeys[direction.key]) { // if direction wasnt pressed last time
+        this.moveIfPossible(new Position([direction.number, 0])); // move direction one space
+      } else { // if direction was held down
+        if (keys[direction.key] >= this.c.das) { // if das is activated
+          if (this.c.arr === 0) { // if it's instant arr
+            this.DASMove(new Position([direction.number, 0])); // go instant
+          } else {
+            
+            const initialPress = (prevKeys[direction.key] - this.c.das) / this.c.arr;
+            const finalPress = (keys[direction.key] - this.c.das) / this.c.arr;
+            const moveAmount = Math.floor(finalPress) - Math.floor(initialPress);
+            
+            for (let i=0; i<moveAmount; i++) { // move amount of times
+              this.moveIfPossible(new Position([direction.number, 0])); // move
+            }
+            
+          }
+        }
+      }
+    }
+    
+    if (keys.hardDrop && !prevKeys.hardDrop) {
+      this.DASMove(new Position([0, 1])); this.placePiece(); // MAKESHIFT SOLUTION FIX LATER!!!!!!!!!!!!!
+    }
+    
+    
     
   }
 }
