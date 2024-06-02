@@ -1,4 +1,4 @@
-import { SRS } from "./rs.js";
+// import { SRS } from "./rs.js";
 
 console.log("Stacker Initializing")
 
@@ -367,6 +367,7 @@ class Stacker {
             output.push("  "); // nothing
           } else {
             output.push("[]"); // block
+            // output.push("[" + j); // block
           }
         });
         output.push("|\n");
@@ -417,6 +418,7 @@ class Stacker {
         // dimensions
         this.c.width = settings.dimensions.width;
         this.c.height = settings.dimensions.height;
+        this.c.visualHeight = settings.dimensions.visualHeight;
         this.c.spawnHeight = settings.dimensions.spawnHeight; // from bottom
         this.c.renderHeight = settings.dimensions.renderHeight; // from bottom
         
@@ -424,11 +426,15 @@ class Stacker {
         this.RNG = new RNG(settings.gameSettings.seed); // not constant
         
         let rs = settings.gameSettings.rotationSystem
+        
+        /*
         if (rs === "SRS") {
           this.c.rotationSystem = new RotationSystem(SRS);
         } else {
           this.c.rotationSystem = new RotationSystem(settings.gameSettings.rotationSystem);
         }
+        */
+        this.c.rotationSystem = new RotationSystem(settings.gameSettings.rotationSystem);
         
         this.c.gravity = settings.gameSettings.gravity;
         this.c.gravityIncrease = settings.gameSettings.gravityIncrease;
@@ -452,6 +458,23 @@ class Stacker {
     this.score = 0;
     this.time = 0;
     this.piece = null;
+    /*
+    
+    PIECE FORMAT
+    {
+    "position": {"x": X-POSITION, "y": Y-POSITION},
+    "rotation": 0,
+    "name": PIECE NAME,
+    "minos": [
+        {
+            "position": {"x": X-POSITION, "y": Y-POSITION},
+            "texture": TEXTURE
+        },
+    ],
+    "spin": SPIN (refer to generatePiece)
+    }
+    
+    */
     this.playing = true; // true: game still going; false: game end
     
     this.updateNext();
@@ -474,9 +497,17 @@ class Stacker {
     if (keys.left || keys.right) { // if a direction key is pressed
       
       if (keys.left < keys.right) { // prioritize key that has been pressed most recently (less time)
-        var direction = {"key": "right", "number": 1};
+        if (keys.left === null) {
+          var direction = {"key": "right", "number": 1};
+        } else {
+          var direction = {"key": "left", "number": -1};
+        }
       } else {
-        var direction = {"key": "left", "number": -1};
+        if (keys.right === null) {
+          var direction = {"key": "left", "number": -1};
+        } else {
+          var direction = {"key": "right", "number": 1};
+        }
       }
       
       if (!prevKeys[direction.key]) { // if direction wasnt pressed last time
@@ -500,12 +531,29 @@ class Stacker {
       }
     }
     
+    if (keys.softDrop) {
+      this.DASMove(new Position([0, 1])); // THIS IS TECHNICALLY A SONIC DROP THIS IS ALSO A MAKESHIFT SOLUTION!!!!!
+    }
+    
     if (keys.hardDrop && !prevKeys.hardDrop) {
       this.DASMove(new Position([0, 1])); this.placePiece(); // MAKESHIFT SOLUTION FIX LATER!!!!!!!!!!!!!
     }
     
+    if (keys.CW && !prevKeys.CW) {
+      this.rotate((this.piece.rotation + 1) % 4);
+    }
     
+    if (keys.CCW && !prevKeys.CCW) {
+      this.rotate((this.piece.rotation + 3) % 4);
+    }
     
+    if (keys.r180 && !prevKeys.r180) {
+      this.rotate((this.piece.rotation + 2) % 4);
+    }
+    
+    if (keys.hold && !prevKeys.hold) {
+      this.holdPiece();
+    }
   }
 }
 
