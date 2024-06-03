@@ -32,6 +32,33 @@ function loadSkin(skinName, skinPaths) {
   skins[skinName] = skin;
 }
 
+function removeFloatingPointError(num, truncate=true, p=3) {
+  var decimal = String(Math.floor((num % 1) * Math.pow(10, p))).padStart(p, "0");
+  const whole = String(Math.floor(num));
+  
+  if (truncate) {
+    while (decimal[decimal.length-1] === "0") {
+      decimal = decimal.substring(0, decimal.length-1);
+    }
+    
+    if (decimal === "") {
+      return whole;
+    }
+  }
+  
+  return whole + "." + decimal;
+}
+
+function msToTime(ms) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = (ms % 60000) * 0.001;
+  var s = removeFloatingPointError(seconds);
+  if (seconds < 10) {
+    s = "0" + s;
+  }
+  return minutes + ":" + s;
+}
+
 /*
 loadSkin("TETR.IO Connected", {
   "minos": {"src": "assets/inGame/TETRIOconnected/minos.png", "connected": true, "blockSize": 96, "mode": "connectedMinos_0"},
@@ -64,7 +91,7 @@ const tilemapIDreference = {
       5: {"x": 0, "y": 576},
       6: {"x": 96, "y": 576},
       7: {"x": 192, "y": 576},
-  //  8: {"x": 288, "y": 576}, // what does this mino even do???
+  //  8: {"x": 288, "y": 576}, // hold mino
       8: {"x": 1920, "y": 0},
       9: {"x": 1920, "y": 576},
     },
@@ -160,6 +187,7 @@ class blockTileMap { // can only handle 1 tilemap
     // console.log(skin);
     this.skin = skin; // skin
     this.skinImage = skin.src; // skin image
+    this.connected = skin.connected;
     
     if (blockSize) { // block size
       this.blockSize = blockSize;
@@ -253,6 +281,19 @@ class GameRenderer {
       const rotation = settings.rotation;
       const name = settings.name;
       
+      var texture;
+      
+      // consider completely changing this to just be
+      // const texture = settings.texture;
+      if (settings.texture) {
+        texture = {
+          "texture": settings.texture.texture,
+          "connected": settings.texture.connected,
+        };
+      } else {
+        texture = null;
+      }
+      
       const visualHeight = !settings.disregardVisualHeight;
       
       /*
@@ -263,16 +304,33 @@ class GameRenderer {
       }
       */
       
+      let i = 0
       game.c.rotationSystem[name].rotations[rotation].forEach((mino) => {
         const piecePosition = mino.addPositionReturn(position);
         
+        var minoTexture;
+        if (texture) {
+          if (texture.connected) {
+            minoTexture = texture.texture[i];
+          } else {
+            minoTexture = [texture.texture, 0];
+          }
+        } else {
+          if (minoTilemap.connected) {
+            minoTexture = mino.texture
+          } else {
+            minoTexture = [mino.texture, 0];
+          }
+        }
+        
         This.ctx.drawImage(
-          ...minoTilemap.getDrawParams(mino.texture, 0), // CHANGE CODE WHEN CONNECTED MINOS
+          ...minoTilemap.getDrawParams(...minoTexture), // CHANGE CODE WHEN CONNECTED MINOS
           globalPosition.x + piecePosition.x * tileSize, // x position
           globalPosition.y + (piecePosition.y - visualHeight * game.c.visualHeight) * tileSize, // y position
           tileSize, tileSize, // width and height of mino
         );
         
+        i++;
       });
     }
     
@@ -307,6 +365,7 @@ class GameRenderer {
       const pieceName = settings.name;
       const rotation = settings.rotation;
       const position = settings.position;
+      const texture = settings.texture;
       
       let bounds = calculateBounds({
         "rotation": rotation,
@@ -330,6 +389,7 @@ class GameRenderer {
         "rotation": 0,
         "name": pieceName,
         "disregardVisualHeight": true,
+        "texture": texture,
       }, This); // render hold
     }
     
@@ -405,14 +465,34 @@ class GameRenderer {
     
     // render hold piece
     if (game.hold.pieceName) {
+      
+      // IMPLEMENT HOLD MINO USING DIFFERENT TEXTURE
+      /*
+      if (game.hold.did) {
+        const texture = {
+          "connected": ghostTilemap
+        }
+      } else {
+        
+      }
+      */
+      if (game.hold.did) {
+        this.ctx.globalAlpha = 0.5;
+      } else {
+        this.ctx.globalAlpha = 1;
+      }
+      
       renderCenteredPiece({
         "rotation": 0,
         "name": game.hold.pieceName,
         "position": {
-          "x": position.x + (-4 * tileSize),
+          "x": position.x + (-3 * tileSize),
           "y": position.y + (1 * tileSize),
-        }
+        },
+        // "texture": texture,
       }, this);
+      
+      this.ctx.globalAlpha = 1;
     }
     
     const nextSpace = 3;
@@ -426,6 +506,25 @@ class GameRenderer {
         }
       }, this);
     }
+    
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = tileSize + "px sans-serif";
+    this.ctx.fillText(
+      "time: " + msToTime(game.time), // IMPLEMENT CONVERSION TO HUMAN TIME
+      position.x + ((game.c.width + 1) * tileSize),
+      position.y + (((game.c.visualHeight) - 3) * tileSize),
+    );
+    this.ctx.fillText(
+      "score: " + game.stats.score,
+      position.x + ((game.c.width + 1) * tileSize),
+      position.y + (((game.c.visualHeight) - 2) * tileSize),
+    );
+    this.ctx.fillText(
+      "level: " + game.levelling.level,
+      position.x + ((game.c.width + 1) * tileSize),
+      position.y + (((game.c.visualHeight) - 1) * tileSize),
+    );
+    
   }
 }
 

@@ -235,6 +235,7 @@ class Stacker {
     */
     
     this.piece.spin = 0;
+    this.lockDelay = 0;
     
     if (!this.pieceValid()) { // if something is blocking the spawning piece
       this.playing = false; // end game
@@ -255,9 +256,104 @@ class Stacker {
       this.board[mino.position.y][mino.position.x] = mino.texture; // set the mino position to the texture
     });
     
-    this.clearLines(); // clear lines
+    const linesCleared = this.clearLines(); // clear lines
+    this.stats.piecesPlaced += 1;
+    
+    if (linesCleared) {
+      this.combo += 1;
+      this.stats.linesCleared += linesCleared;
+      
+      // calculate points for clearing lines
+      var actionPoints;
+      
+      if (this.piece.spin === 1) { // (t)-spin mini
+      
+        if (linesCleared === 1) {
+          actionPoints = 200;
+          this.b2b += 1;
+        } 
+        if (linesCleared === 2) {
+          actionPoints = 400;
+          this.b2b += 1;
+        } 
+        
+      } else if (this.piece.spin === 2) { // (t)-spin 
+        
+        if (linesCleared === 1) {
+          actionPoints = 800;
+          this.b2b += 1;
+        } 
+        if (linesCleared === 2) {
+          actionPoints = 1200;
+          this.b2b += 1;
+        }
+        if (linesCleared === 3) {
+          actionPoints = 1600;
+          this.b2b += 1;
+        }
+        
+      } else { // no spin
+        
+        if (linesCleared === 1) {
+          actionPoints = 100;
+          this.b2b = 0;
+        } else if (linesCleared === 2) {
+          actionPoints = 300;
+          this.b2b = 0;
+        } else if (linesCleared === 3) {
+          actionPoints = 500;
+          this.b2b = 0;
+        } else if (linesCleared === 4) {
+          this.b2b += 1;
+          actionPoints = 800;
+        } else if (linesCleared > 4) {
+          console.log("what the fuck"); // change if implementing pentris
+        }
+        
+      }
+      
+      actionPoints += 50 * this.combo;
+      
+      const isEmptyBoard = this.board.every((row) => {
+        return row.every((mino) => {
+          return mino === 0;
+        });
+      });
+      
+      if (this.b2b >= 1) {
+        actionPoints *= 1.5;
+      }
+      
+      if (linesCleared === 1) {
+        actionPoints += 800;
+      } else if (linesCleared === 2) {
+        actionPoints += 1200;
+      } else if (linesCleared === 3) {
+        actionPoints += 1800;
+      } else if (linesCleared === 4) {
+        if (this.b2b >= 1) {
+          actionPoints += 3200;
+        } else {
+          actionPoints += 2000;
+        }
+      }
+      
+      this.stats.score += actionPoints * this.levelling.level;
+      
+    } else {
+      this.combo = -1;
+      
+      // award points for (t)-spins
+      
+      if (this.piece.spin === 1) { // mini (t)-spin null
+        this.stats.score += 100
+      } else if (this.piece.spin === 2) { // (t)-spin null
+        this.stats.score += 400
+      }
+    }
+    
     this.newPiece(); // load next piece
-    this.hold.did = 0; // reset hold disable   
+    this.hold.did = 0; // reset hold disable
   }
   
   // check if a piece in a certain position is valid
@@ -325,9 +421,12 @@ class Stacker {
   // move continuously in a direction until there is something in the way
   DASMove(offset) {
     let i = true;
+    let j = -1;
     while (i) { // while it can move
       i = this.positionIfPossible(this.piece.position.addPositionReturn(offset)); // move while it can
+      j += 1;
     }
+    return j;
   }
   
   holdPiece() {
@@ -388,7 +487,7 @@ class Stacker {
       output += i; // next pieces
     });
     
-    output += "\nSCORE: " + this.score;
+    output += "\nSCORE: " + this.stats.score;
     output += " | SPIN: " + this.piece.spin;
     output += " | PlAYING: " + this.playing;
     
@@ -411,6 +510,7 @@ class Stacker {
         this.c.das = settings.handling.das;
         this.c.arr = settings.handling.arr;
         this.c.sdf = settings.handling.sdf;
+        this.c.msg = settings.handling.msg; // minimimum sdf gravity
         this.c.dcd = settings.handling.dcd;
         this.c.are = settings.handling.are;
         this.c.lca = settings.handling.lca; // line clear ARE
@@ -455,8 +555,8 @@ class Stacker {
     this.board = Array.from({ length: this.c.height }, () => Array.from({ length: this.c.width }, () => 0));
     this.next = [];
     this.hold = {"pieceName": null, "did": 0};
-    this.score = 0;
     this.time = 0;
+    this.softDropTime = 0;
     this.piece = null;
     /*
     
@@ -476,6 +576,87 @@ class Stacker {
     
     */
     this.playing = true; // true: game still going; false: game end
+    this.gravity = this.c.gravity; // this.c.gravity is initial gravity
+    this.lockDelay = 0;
+    this.combo = -1;
+    this.b2b = -1;
+    
+    this.levelling = {
+      "level": 1,
+      "on": true,
+      "formula": {
+        
+        "piecesToLevel": ((linesCleared) => {
+          return Math.floor(linesCleared * 0.1) + 1; // new level every 10 lines
+        }),
+        "levelToPieces": ((level) => {
+          return (level - 1) * 10;
+        }),
+        
+        "gravity": ((level) => {
+          /*
+            == GUIDELINE FALL & DROP SPEEDS ==
+            
+            secs / line = (0.8 - ((level - 1) * 0.007)) ^ (level - 1)
+            
+            (ms * 1000) / line = (0.8 - ((level - 1) * 0.007)) ^ (level - 1)
+            ms / line = ((0.8 - ((level - 1) * 0.007)) ^ (level - 1)) * 0.001
+            line / ms = 1000 / ((0.8 - ((level - 1) * 0.007)) ^ (level - 1))
+            line / ms = 1000 / ((0.807 - (level * 0.007)) ^ (level - 1))
+            
+            \frac{line}{ms} = \frac{1000}{(0.807 - 0.007(level))^{level-1}}
+            
+          */
+          
+          return (1000 / Math.pow(0.807 - 0.007 * level, level - 1));
+        }),
+        "lockDelay": ((level) => {
+          
+          /*
+            
+            if x is less than 20: 500
+            
+            otherwise, use 1/(0.0008x - 0.014)
+            
+            because it intersects (20, 500) and (30, 100)
+            
+          =======================
+            1 / (20b + c) = 500
+            1 / (30b + c) = 100
+
+            1 = 500(20b + c)
+            1 = 100(30b + c)
+
+            1 = 10000b + 500c
+            1 = 3000b + 100c
+
+            500c = 1 - 10000b
+            100c = 1 - 3000b
+
+            1 - 3000b = 0.2 - 2000b
+            0.8 = 1000b
+
+            b = 0.0008
+
+            100c = 1 - 3000(0.0008)
+            100c = 1 - 2.4
+            100c = -1.4
+            c = -0.014
+          =======================
+            
+          */
+          
+        }),
+        
+      }
+    };
+    
+    this.stats = {
+      "linesCleared": 0,
+      "piecesPlaced": 0,
+      "score": 0,
+      "attack": 0,
+    }
     
     this.updateNext();
     this.newPiece();
@@ -494,7 +675,7 @@ class Stacker {
     // console.log(keys);
     // console.log(timeAdvance);
     
-    if (keys.left || keys.right) { // if a direction key is pressed
+    if (keys.left !== null || keys.right !== null) { // if a direction key is pressed
       
       if (keys.left < keys.right) { // prioritize key that has been pressed most recently (less time)
         if (keys.left === null) {
@@ -510,12 +691,20 @@ class Stacker {
         }
       }
       
-      if (!prevKeys[direction.key]) { // if direction wasnt pressed last time
-        this.moveIfPossible(new Position([direction.number, 0])); // move direction one space
+      if (prevKeys[direction.key] === null) { // if direction wasnt pressed last time
+        /*
+          <!> NOTE <!>
+          I can not use `!prevKeys[direction.key]` because it has this double-pressing glitch whenever it is equal to 0.
+        */
+        if (this.moveIfPossible(new Position([direction.number, 0]))) { // move direction one space
+          this.lockDelay = 0;
+        }
       } else { // if direction was held down
         if (keys[direction.key] >= this.c.das) { // if das is activated
           if (this.c.arr === 0) { // if it's instant arr
-            this.DASMove(new Position([direction.number, 0])); // go instant
+            if (this.DASMove(new Position([direction.number, 0]))) {; // go instant
+              this.lockDelay = 0;
+            }
           } else {
             
             const initialPress = (prevKeys[direction.key] - this.c.das) / this.c.arr;
@@ -523,37 +712,92 @@ class Stacker {
             const moveAmount = Math.floor(finalPress) - Math.floor(initialPress);
             
             for (let i=0; i<moveAmount; i++) { // move amount of times
+              this.lockDelay = 0;
               this.moveIfPossible(new Position([direction.number, 0])); // move
             }
-            
           }
         }
       }
     }
     
-    if (keys.softDrop) {
-      this.DASMove(new Position([0, 1])); // THIS IS TECHNICALLY A SONIC DROP THIS IS ALSO A MAKESHIFT SOLUTION!!!!!
+    if (!this.pieceValid(this.piece.position.addPositionReturn({"x": 0, "y": 1}))) {
+      this.lockDelay += timeAdvance;
+      if (this.lockDelay > this.c.lockDelay) {
+        this.placePiece();
+      }
     }
     
-    if (keys.hardDrop && !prevKeys.hardDrop) {
-      this.DASMove(new Position([0, 1])); this.placePiece(); // MAKESHIFT SOLUTION FIX LATER!!!!!!!!!!!!!
+    if (keys.softDrop) {
+      if (this.c.sdf == Infinity) { // if sdf is infinity
+        this.stats.score += this.DASMove(new Position([0, 1])); // sonic drop
+      } else {
+        
+        if (!prevKeys.softDrop) {
+          this.softDropTime = -1e-3; // feel free to change this to a different number but 0 has floating point error
+        }
+        
+        this.softDropTime += timeAdvance;
+        
+        const initialPress = this.softDropTime - timeAdvance;
+        
+        const newGravity = Math.max(this.gravity, this.c.msg) * this.c.sdf;
+        
+        const moveAmount = Math.floor(this.softDropTime * newGravity) - Math.floor(initialPress * newGravity);
+        
+        for (let i=0; i<moveAmount; i++) { // move amount of times
+          const moved = this.moveIfPossible(new Position([0, 1])); // move
+          if (moved) {
+            this.stats.score += 1;
+          } else {
+            i = moveAmount;
+          }
+        }
+      }
+    } else {
+      this.softDropTime += timeAdvance;
+      
+      const initialPress = this.softDropTime - timeAdvance;
+      const moveAmount = Math.floor(this.softDropTime * this.gravity) - Math.floor(initialPress * this.gravity);
+      
+      for (let i=0; i<moveAmount; i++) { // move amount of times
+        this.moveIfPossible(new Position([0, 1])); // move
+      }
+    }
+    
+    if (keys.sonicDrop) {
+      this.DASMove(new Position([0, 1]));
+    }
+    
+    if (keys.hardDrop && !prevKeys.hardDrop && this.c.hardDropAllowed) {
+      this.stats.score += this.DASMove(new Position([0, 1])) * 2;
+      this.placePiece();
     }
     
     if (keys.CW && !prevKeys.CW) {
-      this.rotate((this.piece.rotation + 1) % 4);
+      if (this.rotate((this.piece.rotation + 1) % 4)) { // rotate clockwise
+        this.lockDelay = 0; // if it worked then reset lock delay
+      }
     }
     
     if (keys.CCW && !prevKeys.CCW) {
-      this.rotate((this.piece.rotation + 3) % 4);
+      if (this.rotate((this.piece.rotation + 3) % 4)) { // rotate counterclockwise
+        this.lockDelay = 0; // if it worked then reset lock delay
+      }
     }
     
-    if (keys.r180 && !prevKeys.r180) {
-      this.rotate((this.piece.rotation + 2) % 4);
+    if (keys.r180 && !prevKeys.r180 && this.c.allow180) { // rotate 180
+      if (this.rotate((this.piece.rotation + 2) % 4)) {
+        this.lockDelay = 0; // if it worked then reset lock delay
+      }
     }
     
-    if (keys.hold && !prevKeys.hold) {
-      this.holdPiece();
+    if (keys.hold && !prevKeys.hold && this.c.holdAllowed) {
+      if (!this.hold.did) {
+        this.holdPiece();
+      }
     }
+    
+    this.time += timeAdvance;
   }
 }
 

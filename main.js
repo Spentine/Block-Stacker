@@ -12,7 +12,9 @@ const settings = {
     "das": 83,
     "arr": 0,
     
-    "sdf": 30,
+ // "sdf": 30,
+    "sdf": Infinity,
+    "msg": 0.001,
     "dcd": 0,
     "are": 0,
     "lca": 0, // line clear ARE
@@ -25,11 +27,17 @@ const settings = {
     "renderHeight": 25, // from bottom
   },
   "gameSettings": {
-    "seed": 1,
+    "seed": 0,
     "rotationSystem": SRS_color,
-    "gravity": 0.00002, // minos fallen per ms
+ // "gravity": 0.0001, // minos fallen per ms
+    "gravity": 0,
     "gravityIncrease": 0.000000007, // multiply by elapsed ms and add to gravity
-    "lockDelay": 250, // ms until locks
+    
+    "levelling": true, // overrides gravity
+    "level": 1,
+    
+ // "lockDelay": 500, // ms until locks
+    "lockDelay": Infinity,
   },
   "gamePermissions": {
     "allow180": true,
