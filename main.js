@@ -3,7 +3,7 @@ import { SRS_mono, SRS_color } from "./stacker/rs.js"
 import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
 
-const settings = {
+var settings = {
   "ver": 1, // settings version for backwards compatibility
   "handling": { // handling is in ms
     
@@ -27,7 +27,8 @@ const settings = {
     "renderHeight": 25, // from bottom
   },
   "gameSettings": {
-    "seed": 0,
+ // "seed": 0,
+    "seed": null,
     "rotationSystem": SRS_color,
  // "gravity": 0.0001, // minos fallen per ms
     "gravity": 0,
@@ -37,7 +38,7 @@ const settings = {
     "level": 1,
     
  // "lockDelay": 500, // ms until locks
-    "lockDelay": Infinity,
+    "lockDelay": 500,
   },
   "gamePermissions": {
     "allow180": true,
@@ -51,7 +52,7 @@ const settings = {
   },
 };
 
-const keyMappings = {
+var keyMappings = {
   "ArrowLeft": "left",
   "ArrowRight": "right",
   "ArrowDown": "softDrop",
@@ -61,7 +62,30 @@ const keyMappings = {
   "KeyZ": "CCW",
   "KeyA": "r180",
   "KeyC": "hold",
+  "KeyR": "reset",
 };
+
+var blockStackerStorage = localStorage.getItem("blockStacker");
+
+if (blockStackerStorage) {
+  
+  try {
+    blockStackerStorage = JSON.parse(blockStackerStorage);
+  } catch {
+    console.log("blockStackerStorage ERROR!");
+    console.log(blockStackerStorage);
+  }
+  
+  if (blockStackerStorage.keyMappingOverrides) {
+    console.log(blockStackerStorage.keyMappingOverrides);
+    keyMappings = blockStackerStorage.keyMappingOverrides;
+  }
+  if (blockStackerStorage.settingOverrides) {
+    settings = blockStackerStorage.settingOverrides;
+  }
+} else {
+  localStorage.setItem("blockStacker", "{}");
+}
 
 const game = new Stacker(settings);
 const inputHandler = new InputHandler(keyMappings);

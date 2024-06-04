@@ -265,11 +265,26 @@ class GameRenderer {
   }
   
   renderGame(data) {
+    /*
     this.renderGameBoard({
       "game": data,
       "skinName": "TETR.IO",
       "position": {"x": 400, "y": 200},
       "size": 48, // width of one tile
+    });
+    */
+    
+    const size = Math.min(this.canvas.width, this.canvas.height);
+    const tileSize = size / 30;
+    
+    this.renderGameBoard({
+      "game": data,
+      "skinName": "TETR.IO",
+      "position": {
+        "x": 0.5 * (this.canvas.width - tileSize * data.c.width),
+        "y": 0.5 * (this.canvas.height - tileSize * data.c.visualHeight),
+      },
+      "size": tileSize, // width of one tile
     });
   }
   
@@ -288,7 +303,7 @@ class GameRenderer {
       if (settings.texture) {
         texture = {
           "texture": settings.texture.texture,
-          "connected": settings.texture.connected,
+          "type": settings.texture.type,
         };
       } else {
         texture = null;
@@ -307,17 +322,26 @@ class GameRenderer {
       let i = 0
       game.c.rotationSystem[name].rotations[rotation].forEach((mino) => {
         const piecePosition = mino.addPositionReturn(position);
+        const xPosition = globalPosition.x + piecePosition.x * tileSize;
+        const yPosition = globalPosition.y + (piecePosition.y - visualHeight * game.c.visualHeight) * tileSize;
         
         var minoTexture;
         if (texture) {
-          if (texture.connected) {
+          if (texture.type === "connected") {
             minoTexture = texture.texture[i];
+          } else if (texture.type === "overlay") {
+            This.ctx.fillStyle = "rgba(0, 0, 0, " + texture.texture + ")";
+            This.ctx.globalCompositeOperation = "multiply";
+            This.ctx.fillRect(xPosition, yPosition, tileSize, tileSize);
+            This.ctx.globalCompositeOperation = "source-over";
+            i++;
+            return null;
           } else {
             minoTexture = [texture.texture, 0];
           }
         } else {
           if (minoTilemap.connected) {
-            minoTexture = mino.texture
+            minoTexture = mino.texture;
           } else {
             minoTexture = [mino.texture, 0];
           }
@@ -325,8 +349,8 @@ class GameRenderer {
         
         This.ctx.drawImage(
           ...minoTilemap.getDrawParams(...minoTexture), // CHANGE CODE WHEN CONNECTED MINOS
-          globalPosition.x + piecePosition.x * tileSize, // x position
-          globalPosition.y + (piecePosition.y - visualHeight * game.c.visualHeight) * tileSize, // y position
+          xPosition, // x position
+          yPosition, // y position
           tileSize, tileSize, // width and height of mino
         );
         
@@ -404,6 +428,7 @@ class GameRenderer {
     const ghostTilemap = new blockTileMap(skin.ghost);
     
     this.ctx.globalAlpha = 1;
+    this.ctx.globalCompositeOperation = "source-over";
     this.ctx.fillStyle = "#222";
     this.ctx.fillRect(
       position.x,
@@ -435,6 +460,19 @@ class GameRenderer {
       "rotation": game.piece.rotation,
       "name": game.piece.name,
     }, this);
+    
+    if (game.groundTime) {
+      renderPiece({
+        "globalPosition": position,
+        "position": game.piece.position,
+        "rotation": game.piece.rotation,
+        "name": game.piece.name,
+        "texture": {
+          "texture": game.groundTime / game.lockDelay,
+          "type": "overlay",
+        },
+      }, this);
+    }
     
     // the ghost piece can just be represented with just a position because the name and the rotation is the same as the current piece but i want to do this so that i wont have to factorize my code in the future
     
@@ -510,7 +548,7 @@ class GameRenderer {
     this.ctx.fillStyle = "#fff";
     this.ctx.font = tileSize + "px sans-serif";
     this.ctx.fillText(
-      "time: " + msToTime(game.time), // IMPLEMENT CONVERSION TO HUMAN TIME
+      "time: " + msToTime(game.time),
       position.x + ((game.c.width + 1) * tileSize),
       position.y + (((game.c.visualHeight) - 3) * tileSize),
     );
@@ -524,7 +562,11 @@ class GameRenderer {
       position.x + ((game.c.width + 1) * tileSize),
       position.y + (((game.c.visualHeight) - 1) * tileSize),
     );
-    
+    this.ctx.fillText(
+      "lines: " + game.stats.linesCleared,
+      position.x + ((game.c.width + 1) * tileSize),
+      position.y + (((game.c.visualHeight) - 0) * tileSize),
+    );
   }
 }
 

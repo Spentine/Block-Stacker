@@ -14,6 +14,7 @@ class InputHandler {
   keyDown(e) {
     if (!e.repeat) { // this function will also be called bc of built-in key ARR
       this.directInterface[e.code] = Date.now(); // the code for the keyDown is here
+      // console.log(this.directInterface);
     }
   }
 

@@ -235,7 +235,7 @@ class Stacker {
     */
     
     this.piece.spin = 0;
-    this.lockDelay = 0;
+    this.groundTime = 0;
     
     if (!this.pieceValid()) { // if something is blocking the spawning piece
       this.playing = false; // end game
@@ -262,6 +262,7 @@ class Stacker {
     if (linesCleared) {
       this.combo += 1;
       this.stats.linesCleared += linesCleared;
+      this.updateLevelling()
       
       // calculate points for clearing lines
       var actionPoints;
@@ -494,6 +495,14 @@ class Stacker {
     return output;
   }
   
+  updateLevelling() {
+    if (this.levelling.on) {
+      this.levelling.level = this.levelling.formulas.piecesToLevel(this.stats.linesCleared + this.levelling.formulas.levelToPieces(this.c.level));
+      this.gravity = this.levelling.formulas.gravity(this.levelling.level);
+      this.lockDelay = this.levelling.formulas.lockDelay(this.levelling.level);
+    }
+  }
+  
   constructor(settings) {
     /*
       builds the block stacker game
@@ -523,7 +532,11 @@ class Stacker {
         this.c.renderHeight = settings.dimensions.renderHeight; // from bottom
         
         // game settings
-        this.RNG = new RNG(settings.gameSettings.seed); // not constant
+        if (settings.gameSettings.seed === null) {
+          this.RNG = new RNG(Math.floor(Math.random()*0x80000000));
+        } else {
+          this.RNG = new RNG(settings.gameSettings.seed); // not constant
+        }
         
         let rs = settings.gameSettings.rotationSystem
         
@@ -539,6 +552,8 @@ class Stacker {
         this.c.gravity = settings.gameSettings.gravity;
         this.c.gravityIncrease = settings.gameSettings.gravityIncrease;
         this.c.lockDelay = settings.gameSettings.lockDelay;
+        this.c.levelling = settings.gameSettings.levelling;
+        this.c.level = settings.gameSettings.level; // starting level
         
         // game permissions
         this.c.allow180 = settings.gamePermissions.allow180;
@@ -550,7 +565,10 @@ class Stacker {
         this.c.next = settings.userSettings.next;
         this.c.ghost = settings.userSettings.ghost;
     }
-    
+    this.startGame();
+  }
+  
+  startGame() {
     // this code does some dark magic that initializes a board with a width and height
     this.board = Array.from({ length: this.c.height }, () => Array.from({ length: this.c.width }, () => 0));
     this.next = [];
@@ -577,14 +595,15 @@ class Stacker {
     */
     this.playing = true; // true: game still going; false: game end
     this.gravity = this.c.gravity; // this.c.gravity is initial gravity
-    this.lockDelay = 0;
+    this.lockDelay = this.c.lockDelay;
+    this.groundTime = 0;
     this.combo = -1;
     this.b2b = -1;
     
     this.levelling = {
-      "level": 1,
-      "on": true,
-      "formula": {
+      "level": this.c.level,
+      "on": this.c.levelling,
+      "formulas": {
         
         "piecesToLevel": ((linesCleared) => {
           return Math.floor(linesCleared * 0.1) + 1; // new level every 10 lines
@@ -601,51 +620,27 @@ class Stacker {
             
             (ms * 1000) / line = (0.8 - ((level - 1) * 0.007)) ^ (level - 1)
             ms / line = ((0.8 - ((level - 1) * 0.007)) ^ (level - 1)) * 0.001
-            line / ms = 1000 / ((0.8 - ((level - 1) * 0.007)) ^ (level - 1))
-            line / ms = 1000 / ((0.807 - (level * 0.007)) ^ (level - 1))
+            ms / line = ((0.807 - 0.007(level)) ^ (level - 1)) * 0.001
             
-            \frac{line}{ms} = \frac{1000}{(0.807 - 0.007(level))^{level-1}}
+            \frac{line}{ms} = \frac{0.001}{(0.807 - 0.007(level))^{level-1}}
             
           */
           
-          return (1000 / Math.pow(0.807 - 0.007 * level, level - 1));
+          return (0.001/Math.pow(0.807 - 0.007 * level, level - 1));
         }),
         "lockDelay": ((level) => {
-          
           /*
+            creates 1/(ax + b) formula based on two points it has to intersect:
             
-            if x is less than 20: 500
-            
-            otherwise, use 1/(0.0008x - 0.014)
-            
-            because it intersects (20, 500) and (30, 100)
-            
-          =======================
-            1 / (20b + c) = 500
-            1 / (30b + c) = 100
-
-            1 = 500(20b + c)
-            1 = 100(30b + c)
-
-            1 = 10000b + 500c
-            1 = 3000b + 100c
-
-            500c = 1 - 10000b
-            100c = 1 - 3000b
-
-            1 - 3000b = 0.2 - 2000b
-            0.8 = 1000b
-
-            b = 0.0008
-
-            100c = 1 - 3000(0.0008)
-            100c = 1 - 2.4
-            100c = -1.4
-            c = -0.014
-          =======================
-            
+            a = (1/y2 - 1/y1)/(x2 - x1)
+            b = (1/y1) - ax1
           */
           
+          if (level > 20) {
+            return (1 / (0.0004 * level - 0.006));
+          } else {
+            return 500;
+          }
         }),
         
       }
@@ -661,7 +656,7 @@ class Stacker {
     this.updateNext();
     this.newPiece();
     this.updateNext();
-    
+    this.updateLevelling()
   }
   
   tick(keys, prevKeys, timeAdvance) {
@@ -674,6 +669,14 @@ class Stacker {
     
     // console.log(keys);
     // console.log(timeAdvance);
+    
+    if (keys.reset && !prevKeys.reset) {
+      this.startGame();
+    }
+    
+    if (!this.playing) {
+      return false;
+    }
     
     if (keys.left !== null || keys.right !== null) { // if a direction key is pressed
       
@@ -697,13 +700,13 @@ class Stacker {
           I can not use `!prevKeys[direction.key]` because it has this double-pressing glitch whenever it is equal to 0.
         */
         if (this.moveIfPossible(new Position([direction.number, 0]))) { // move direction one space
-          this.lockDelay = 0;
+          this.groundTime = 0;
         }
       } else { // if direction was held down
         if (keys[direction.key] >= this.c.das) { // if das is activated
           if (this.c.arr === 0) { // if it's instant arr
             if (this.DASMove(new Position([direction.number, 0]))) {; // go instant
-              this.lockDelay = 0;
+              this.groundTime = 0;
             }
           } else {
             
@@ -712,7 +715,7 @@ class Stacker {
             const moveAmount = Math.floor(finalPress) - Math.floor(initialPress);
             
             for (let i=0; i<moveAmount; i++) { // move amount of times
-              this.lockDelay = 0;
+              this.groundTime = 0;
               this.moveIfPossible(new Position([direction.number, 0])); // move
             }
           }
@@ -721,8 +724,8 @@ class Stacker {
     }
     
     if (!this.pieceValid(this.piece.position.addPositionReturn({"x": 0, "y": 1}))) {
-      this.lockDelay += timeAdvance;
-      if (this.lockDelay > this.c.lockDelay) {
+      this.groundTime += timeAdvance;
+      if (this.groundTime > this.lockDelay) {
         this.placePiece();
       }
     }
@@ -775,19 +778,19 @@ class Stacker {
     
     if (keys.CW && !prevKeys.CW) {
       if (this.rotate((this.piece.rotation + 1) % 4)) { // rotate clockwise
-        this.lockDelay = 0; // if it worked then reset lock delay
+        this.groundTime = 0; // if it worked then reset lock delay
       }
     }
     
     if (keys.CCW && !prevKeys.CCW) {
       if (this.rotate((this.piece.rotation + 3) % 4)) { // rotate counterclockwise
-        this.lockDelay = 0; // if it worked then reset lock delay
+        this.groundTime = 0; // if it worked then reset lock delay
       }
     }
     
     if (keys.r180 && !prevKeys.r180 && this.c.allow180) { // rotate 180
       if (this.rotate((this.piece.rotation + 2) % 4)) {
-        this.lockDelay = 0; // if it worked then reset lock delay
+        this.groundTime = 0; // if it worked then reset lock delay
       }
     }
     
@@ -798,6 +801,7 @@ class Stacker {
     }
     
     this.time += timeAdvance;
+    return true;
   }
 }
 
