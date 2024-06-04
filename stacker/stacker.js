@@ -637,7 +637,8 @@ class Stacker {
           */
           
           if (level > 20) {
-            return (1 / (0.0004 * level - 0.006));
+            // return (1 / (0.0004 * level - 0.006)); // (40, 100)
+            return (1 / (0.00023333333333333333 * level - 0.0026666666666666666));
           } else {
             return 500;
           }

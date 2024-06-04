@@ -51,6 +51,7 @@ var settings = {
     "ghost": true,
   },
 };
+// console.log(JSON.stringify(settings));
 
 var keyMappings = {
   "ArrowLeft": "left",
