@@ -97,18 +97,6 @@ function DOMLoaded(event) {
   renderer.useCanvas(cRender);
 }
 
-function update() {
-  renderer.renderScreen({
-    "scene": "game",
-    "data": {
-      "board": game,
-      "miscData": {
-        "mousePosition": mousePosition,
-      }
-    }
-  });
-}
-
 var lastFrame = Date.now();
 var lastInputs = inputHandler.getInputs();
 
@@ -116,9 +104,23 @@ function tickFrame() {
   
   const inputs = inputHandler.getInputs();
   // console.log(inputs);
-  game.tick(inputs, lastInputs, Date.now() - lastFrame);
+  const gameEvents = game.tick(inputs, lastInputs, Date.now() - lastFrame)
+  
+  /*
+  if (JSON.stringify(gameEvents) !== '{"playing":true}') {
+    console.log(gameEvents);
+  }
+  */
   // console.log(game.consoleRender());
-  update();
+  
+  renderer.renderScreen({
+    "scene": "game",
+    "data": {
+      "board": game,
+      "frameTime": Date.now() - lastFrame,
+    }
+  });
+  
   lastFrame = Date.now();
   lastInputs = structuredClone(inputs);
   

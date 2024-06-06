@@ -257,6 +257,7 @@ class Stacker {
     });
     
     const linesCleared = this.clearLines(); // clear lines
+    
     this.stats.piecesPlaced += 1;
     
     if (linesCleared) {
@@ -315,11 +316,21 @@ class Stacker {
       
       actionPoints += 50 * this.combo;
       
+      /*
+        PC Detector
+        
+        NOTE: It is also possible to check for PCs by only checking the *bottom* row, but I just want to be extra sure in case it's a custom map or something.
+      */
+      
       const isEmptyBoard = this.board.every((row) => {
         return row.every((mino) => {
           return mino === 0;
         });
       });
+      
+      if (isEmptyBoard) {
+        this.events.pc = true;
+      }
       
       if (this.b2b >= 1) {
         actionPoints *= 1.5;
@@ -353,6 +364,11 @@ class Stacker {
       }
     }
     
+    this.events.linesCleared = linesCleared;
+    this.events.spinPlacement = this.piece.spin;
+    this.events.combo = this.combo;
+    this.events.b2b = this.b2b;
+    
     this.newPiece(); // load next piece
     this.hold.did = 0; // reset hold disable
   }
@@ -381,6 +397,7 @@ class Stacker {
       for (const spin of spinData.spin) {
         if (this.boardPosition(position.addPositionReturn(spin)) !== 0) { // if spin blocks are filled
           return 2; // full spin
+          this.events.spin = 2;
         }
       }
     }
@@ -395,10 +412,12 @@ class Stacker {
       
       if (mini === spinData.minispin.length && spinData.minispin.length !== 1) { // if every mini block is filled
         return 2; // full spin
+        this.events.spin = 2;
       } else if (mini === 0) { // if none are filled
         return 0; // no spin
       } else { // if some are filled
         return 1; // mini spin
+        this.events.spin = 1;
       }
     }
     
@@ -449,7 +468,14 @@ class Stacker {
       const pos = this.piece.position.addPositionReturn(kick.position); // get resulting position after kick
       if (this.pieceValid(pos, rotation)) { // if the position is valid
         this.movePiece(pos, rotation); // move the current piece to the position
-        this.piece.spin = Math.max(kick.spin, this.isSpinPosition()); // evaluate max of piece's position and the kick reward
+        
+        if (kick.spin) {
+          this.piece.spin = 2;
+          this.events.spin = kick.spin;
+        } else {
+          this.piece.spin = this.isSpinPosition();
+        }
+        
         return true;  // return true if any kick is valid
       }
     }
@@ -657,7 +683,8 @@ class Stacker {
     this.updateNext();
     this.newPiece();
     this.updateNext();
-    this.updateLevelling()
+    this.updateLevelling();
+    this.events = {"playing": true};
   }
   
   tick(keys, prevKeys, timeAdvance) {
@@ -670,13 +697,17 @@ class Stacker {
     
     // console.log(keys);
     // console.log(timeAdvance);
+    this.events = {"playing": true};
     
     if (keys.reset && !prevKeys.reset) {
       this.startGame();
-    }
+      this.events.reset = true;
+    } 
     
+    // ADD THIS AFTER MOST OF THE FUNCTIONS!! If there is a placement that ends the game and other actions can be put in, it's a bug!!
     if (!this.playing) {
-      return false;
+      this.events.playing = false;
+      return this.events;
     }
     
     if (keys.left !== null || keys.right !== null) { // if a direction key is pressed
@@ -728,12 +759,15 @@ class Stacker {
       this.groundTime += timeAdvance;
       if (this.groundTime > this.lockDelay) {
         this.placePiece();
+        this.events.lockDelayExpired = true;
       }
     }
     
     if (keys.softDrop) {
       if (this.c.sdf == Infinity) { // if sdf is infinity
-        this.stats.score += this.DASMove(new Position([0, 1])); // sonic drop
+        const sonicFall = this.DASMove(new Position([0, 1]));
+        this.events.softDropMovement = sonicFall;
+        this.stats.score += sonicFall; // sonic drop
       } else {
         
         if (!prevKeys.softDrop) {
@@ -748,10 +782,13 @@ class Stacker {
         
         const moveAmount = Math.floor(this.softDropTime * newGravity) - Math.floor(initialPress * newGravity);
         
+        this.events.softDropMovement = 0;
+        
         for (let i=0; i<moveAmount; i++) { // move amount of times
           const moved = this.moveIfPossible(new Position([0, 1])); // move
           if (moved) {
             this.stats.score += 1;
+            this.events.softDropMovement += 1;
           } else {
             i = moveAmount;
           }
@@ -763,9 +800,21 @@ class Stacker {
       const initialPress = this.softDropTime - timeAdvance;
       const moveAmount = Math.floor(this.softDropTime * this.gravity) - Math.floor(initialPress * this.gravity);
       
-      for (let i=0; i<moveAmount; i++) { // move amount of times
-        this.moveIfPossible(new Position([0, 1])); // move
+      if (moveAmount !== 0) {
+        
+        this.events.gravityMovement = 0; // may also set it to 0 if gravity wants to act but it's being blocked
+        
+        for (let i=0; i<moveAmount; i++) { // move amount of times
+          const moved = this.moveIfPossible(new Position([0, 1])); // move
+          if (moved) {
+            this.events.gravityMovement += 1;
+          } else {
+            i = moveAmount;
+          }
+        }
+        
       }
+      
     }
     
     if (keys.sonicDrop) {
@@ -775,34 +824,41 @@ class Stacker {
     if (keys.hardDrop && !prevKeys.hardDrop && this.c.hardDropAllowed) {
       this.stats.score += this.DASMove(new Position([0, 1])) * 2;
       this.placePiece();
+      this.events.hardDrop = true;
     }
+    
+    // TODO: combine all rotations into one block
     
     if (keys.CW && !prevKeys.CW) {
       if (this.rotate((this.piece.rotation + 1) % 4)) { // rotate clockwise
         this.groundTime = 0; // if it worked then reset lock delay
+        this.events.rotation = "CW";
       }
     }
     
     if (keys.CCW && !prevKeys.CCW) {
       if (this.rotate((this.piece.rotation + 3) % 4)) { // rotate counterclockwise
         this.groundTime = 0; // if it worked then reset lock delay
+        this.events.rotation = "CCW";
       }
     }
     
     if (keys.r180 && !prevKeys.r180 && this.c.allow180) { // rotate 180
       if (this.rotate((this.piece.rotation + 2) % 4)) {
         this.groundTime = 0; // if it worked then reset lock delay
+        this.events.rotation = "180";
       }
     }
     
     if (keys.hold && !prevKeys.hold && this.c.holdAllowed) {
       if (!this.hold.did) {
         this.holdPiece();
+        this.events.held = true;
       }
     }
     
     this.time += timeAdvance;
-    return true;
+    return this.events;
   }
 }
 

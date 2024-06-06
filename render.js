@@ -228,6 +228,7 @@ class GameRenderer {
   constructor() {
     this.canvas = null;
     this.ctx = null;
+    this.persistentEffects = {};
   }
   
   useCanvas(canvas) {
@@ -277,6 +278,10 @@ class GameRenderer {
     const size = Math.min(this.canvas.width, this.canvas.height);
     const tileSize = size / 30;
     
+    if (!this.persistentEffects.game1) {
+      this.persistentEffects.game1 = {};
+    }
+    
     this.renderGameBoard({
       "game": data,
       "skinName": "TETR.IO",
@@ -285,6 +290,7 @@ class GameRenderer {
         "y": 0.5 * (this.canvas.height - tileSize * data.c.visualHeight),
       },
       "size": tileSize, // width of one tile
+      "persistentEffects": this.persistentEffects.game1,
     });
   }
   
@@ -421,6 +427,7 @@ class GameRenderer {
     const skinName = boardRenderData.skinName;
     const tileSize = boardRenderData.size;
     const position = boardRenderData.position;
+    const persistentEffects = boardRenderData.persistentEffects;
     
     const skin = skins[skinName]; // for easier referencing
     
@@ -567,6 +574,163 @@ class GameRenderer {
       position.x + ((game.c.width + 1) * tileSize),
       position.y + (((game.c.visualHeight) - 0) * tileSize),
     );
+    
+    // persistentEffects
+    if (!persistentEffects.gameActionDisp) {
+      persistentEffects.gameActionDisp = [];
+      // console.log("reset!");
+    }
+    
+    if (game.events.reset) {
+      persistentEffects.gameActionDisp = [];
+    }
+    
+    const gameActionDisp = persistentEffects.gameActionDisp;
+    
+    {
+      function findEmptyInQueue(amount=1) {
+        let taken;
+        if (amount === 1) {
+          taken = gameActionDisp.indexOf(0);
+          if (taken === -1) {
+            taken = gameActionDisp.push(0) - 1;
+          }
+        } else {
+          taken = -1;
+          let empty = 0;
+          for (let i=0; i<gameActionDisp.length; i++) {
+            if (gameActionDisp[i] === 0) {
+              empty += 1;
+            } else {
+              empty = 0;
+            }
+            if (empty === amount) {
+              taken = i - amount + 1;
+              i = Infinity;
+            }
+          }
+          if (taken === -1) {
+            gameActionDisp.push(0);
+            // console.log(empty);
+            for (let i=0; i<amount-empty-1; i++) {
+              gameActionDisp.push(0);
+            }
+            taken = gameActionDisp.length - amount;
+          }
+        }
+        return taken;
+      }
+      
+      function addToQueue(e, pos) {
+        gameActionDisp[pos] = {
+          "event": e,
+          "time": Date.now(),
+          "originalPosition": pos,
+        }
+      }
+      
+      // game.events.spinPlacement
+      
+      var reserve = 2;
+      
+      if (game.events.spinPlacement) {
+        reserve += 1;
+      }
+      
+      if (game.events.combo > 0) {
+        reserve += 1;
+      }
+      
+      if (game.events.b2b > 0) {
+        reserve += 1;
+      }
+      
+      if (game.events.pc) {
+        reserve += 1;
+      }
+      
+      var pos = findEmptyInQueue(reserve);
+      // console.log(pos, gameActionDisp)
+      
+      if (game.events.linesCleared === 1) {
+        addToQueue("Single", pos);
+      } else if (game.events.linesCleared === 2) {
+        addToQueue("Double", pos);
+      } else if (game.events.linesCleared === 3) {
+        addToQueue("Triple", pos);
+      } else if (game.events.linesCleared === 4) {
+        addToQueue("Quad", pos);
+      }
+      
+      pos += 1;
+      
+      if (game.events.spinPlacement === 1) {
+        addToQueue("Mini T-Spin", pos);
+      } else if (game.events.spinPlacement === 2) {
+        addToQueue("T-Spin", pos);
+      } else {
+        pos -= 1;
+      }
+      
+      pos += 1;
+      
+      if (game.events.linesCleared) {
+        if (game.events.combo > 0) {
+          addToQueue(game.events.combo + " Combo", pos);
+        } else {
+          pos -= 1;
+        }
+        
+        pos += 1;
+        
+        if (game.events.b2b > 0) {
+          addToQueue("Back-To-Back x" + game.events.b2b, pos);
+        } else {
+          pos -= 1;
+        }
+        
+        pos += 1;
+      }
+      
+      if (game.events.pc) {
+        addToQueue("Perfect Clear", pos);
+      } else {
+        pos -= 1;
+      }
+      
+      pos += 1;
+      
+      if (game.events.linesCleared) {
+        addToQueue("", pos);
+      }
+    }
+    
+    // console.log(gameActionDisp);
+    
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = tileSize + "px sans-serif";
+    
+    const eventExpiryTime = 1500;
+    
+    for (let i=0; i<gameActionDisp.length; i++) {
+      if (gameActionDisp[i].time + eventExpiryTime > Date.now()) { // if it's within the timeframe
+        // render
+        this.ctx.globalAlpha = (1 - (Date.now() - gameActionDisp[i].time) / eventExpiryTime);
+        const displayedText = gameActionDisp[i].event;
+        const textMetrics = this.ctx.measureText(displayedText);
+        this.ctx.fillText(
+          displayedText,
+          position.x - textMetrics.width + -1 * tileSize,
+          position.y + ((5 + 1.2 * i) * tileSize),
+        );
+      } else {
+        // mark it as 0
+        gameActionDisp[i] = 0;
+      }
+    }
+    
+    this.ctx.globalAlpha = 1;
+    
   }
 }
 
