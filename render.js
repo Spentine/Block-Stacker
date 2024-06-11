@@ -225,9 +225,24 @@ class blockTileMap { // can only handle 1 tilemap
 }
 
 class GameRenderer {
+  getUiElements() {
+    this.uiElem = {
+      "home": {
+        "title": document.getElementById("UI-homepageTitle"),
+        "start": document.getElementById("UI-start"),
+        "settings": document.getElementById("UI-settings"),
+        "credits": document.getElementById("UI-credits"),
+        "source": document.getElementById("UI-source"),
+      }
+    }
+  }
+  
   constructor() {
     this.canvas = null;
     this.ctx = null;
+    this.uiElem = null;
+    this.whRatio = 1;
+    this.uiScaling = 1;
     this.persistentEffects = {};
   }
   
@@ -240,6 +255,8 @@ class GameRenderer {
     if (this.prevCanvasWidth != window.innerWidth || this.prevCanvasHeight != window.innerHeight) {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
+      this.whRatio = this.canvas.width / this.canvas.height;
+      this.uiScaling = this.canvas.width;
     }
     this.prevCanvasWidth = this.canvas.width;
     this.prevCanvasHeight = this.canvas.height;
@@ -251,16 +268,52 @@ class GameRenderer {
     The game uses a scene system to decide what to render.
     
     game: renders gameplay
-    menu: renders menu
+    ui: renders ui
     
     */
     
-    switch (renderData.scene) {
+    switch (renderData.type) {
       case "game":
-        this.renderGame(renderData.data.board);
+        this.renderGame(renderData.data);
         break;
-      case "menu":
-        // something
+      case "ui":
+        this.renderUI(renderData.data.scene);
+        break;
+    }
+  }
+  
+  renderUI(data) {
+    if (!this.uiElem) {
+      return false;
+    }
+    
+    const scene = data;
+    
+    const setBoundaries = (elem, boundaries) => {
+      elem.style.left = boundaries.min.x + "px";
+      elem.style.top = boundaries.min.y + "px";
+      
+      elem.style.right = this.canvas.width - boundaries.max.x + "px";
+      elem.style.bottom = this.canvas.height - boundaries.max.y + "px";
+    }
+    
+    switch (scene) {
+      case "home":
+        
+        setBoundaries(this.uiElem.home.start, {
+          "min": {
+            "x": (0.5 * this.canvas.width - 0.05 * this.uiScaling),
+            "y": (0.5 * this.canvas.height - 0.05 * this.uiScaling),
+          },
+          "max": {
+            "x": (0.5 * this.canvas.width + 0.05 * this.uiScaling),
+            "y": (0.5 * this.canvas.height + 0.05 * this.uiScaling),
+          }
+        });
+        
+        
+        break;
+      case "test":
         break;
     }
   }
@@ -283,11 +336,11 @@ class GameRenderer {
     }
     
     this.renderGameBoard({
-      "game": data,
+      "game": data.board,
       "skinName": "TETR.IO",
       "position": {
-        "x": 0.5 * (this.canvas.width - tileSize * data.c.width),
-        "y": 0.5 * (this.canvas.height - tileSize * data.c.visualHeight),
+        "x": 0.5 * (this.canvas.width - tileSize * data.board.c.width),
+        "y": 0.5 * (this.canvas.height - tileSize * data.board.c.visualHeight),
       },
       "size": tileSize, // width of one tile
       "persistentEffects": this.persistentEffects.game1,
@@ -296,7 +349,7 @@ class GameRenderer {
   
   renderGameBoard(boardRenderData) {
     
-    function renderPiece(settings, This) { // will render piece
+    const renderPiece = (settings) => { // will render piece
       const globalPosition = settings.globalPosition;
       const position = settings.position;
       const rotation = settings.rotation;
@@ -336,10 +389,10 @@ class GameRenderer {
           if (texture.type === "connected") {
             minoTexture = texture.texture[i];
           } else if (texture.type === "overlay") {
-            This.ctx.fillStyle = "rgba(0, 0, 0, " + texture.texture + ")";
-            This.ctx.globalCompositeOperation = "multiply";
-            This.ctx.fillRect(xPosition, yPosition, tileSize, tileSize);
-            This.ctx.globalCompositeOperation = "source-over";
+            this.ctx.fillStyle = "rgba(0, 0, 0, " + texture.texture + ")";
+            this.ctx.globalCompositeOperation = "multiply";
+            this.ctx.fillRect(xPosition, yPosition, tileSize, tileSize);
+            this.ctx.globalCompositeOperation = "source-over";
             i++;
             return null;
           } else {
@@ -353,7 +406,7 @@ class GameRenderer {
           }
         }
         
-        This.ctx.drawImage(
+        this.ctx.drawImage(
           ...minoTilemap.getDrawParams(...minoTexture), // CHANGE CODE WHEN CONNECTED MINOS
           xPosition, // x position
           yPosition, // y position
@@ -364,7 +417,7 @@ class GameRenderer {
       });
     }
     
-    function calculateBounds(settings, This) {
+    const calculateBounds = (settings) => {
       const rotation = settings.rotation;
       const name = settings.name;
       
@@ -391,7 +444,7 @@ class GameRenderer {
       return bounds;
     }
     
-    function renderCenteredPiece(settings, This) {
+    const renderCenteredPiece = (settings) => {
       const pieceName = settings.name;
       const rotation = settings.rotation;
       const position = settings.position;
@@ -400,7 +453,7 @@ class GameRenderer {
       let bounds = calculateBounds({
         "rotation": rotation,
         "name": pieceName,
-      }, This); // calculate bounds of piece
+      }, this); // calculate bounds of piece
       // console.log(bounds);
       
       let offset = {
@@ -420,7 +473,7 @@ class GameRenderer {
         "name": pieceName,
         "disregardVisualHeight": true,
         "texture": texture,
-      }, This); // render hold
+      }, this); // render hold
     }
     
     const game = boardRenderData.game;
@@ -466,7 +519,7 @@ class GameRenderer {
       "position": game.piece.position,
       "rotation": game.piece.rotation,
       "name": game.piece.name,
-    }, this);
+    });
     
     if (game.groundTime) {
       renderPiece({
@@ -478,7 +531,7 @@ class GameRenderer {
           "texture": game.groundTime / game.lockDelay,
           "type": "overlay",
         },
-      }, this);
+      });
     }
     
     // the ghost piece can just be represented with just a position because the name and the rotation is the same as the current piece but i want to do this so that i wont have to factorize my code in the future
@@ -504,7 +557,7 @@ class GameRenderer {
       "position": ghostPiece.position,
       "rotation": ghostPiece.rotation,
       "name": ghostPiece.name,
-    }, this); // render ghost piece
+    }); // render ghost piece
     
     this.ctx.globalAlpha = 1; // opaque
     
@@ -535,7 +588,7 @@ class GameRenderer {
           "y": position.y + (1 * tileSize),
         },
         // "texture": texture,
-      }, this);
+      });
       
       this.ctx.globalAlpha = 1;
     }
@@ -549,7 +602,7 @@ class GameRenderer {
           "x": position.x + ((game.c.width + 2) * tileSize),
           "y": position.y + ((1 + (nextSpace*i)) * tileSize),
         }
-      }, this);
+      });
     }
     
     this.ctx.fillStyle = "#fff";
@@ -588,7 +641,7 @@ class GameRenderer {
     const gameActionDisp = persistentEffects.gameActionDisp;
     
     {
-      function findEmptyInQueue(amount=1) {
+      const findEmptyInQueue = (amount=1) => {
         let taken;
         if (amount === 1) {
           taken = gameActionDisp.indexOf(0);

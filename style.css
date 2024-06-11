@@ -5,9 +5,43 @@ html, body {
   margin: 0 !important;
   padding: 3 !important;
   overflow: hidden;
+  font-family: "sans-serif";
 }
 
 
-canvas {
-  position: absolute;
+#render {
+  position: fixed;
+  display: block;
+  z-index: 0;
+}
+
+.ui {
+  z-index: auto;
+  position: fixed;
+}
+
+#homepage {
+  position: fixed;
+  display: none;
+  background-color: none;
+}
+
+.centeredText {
+  text-align: center;
+}
+
+.ui.Button1 {
+  background-color: #bbccdd;
+  border: 2px solid #667788;
+  border-radius: 4px;
+  color: black;
+  text-align: center;
+  text-decoration: none;
+  font-size: 20px;
+  font-family: inherit;
+  transition-duration: 0.1s;
+}
+
+.ui.Button1:hover {
+  background-color: #8899aa;
 }

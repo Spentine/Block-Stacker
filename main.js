@@ -66,6 +66,7 @@ var keyMappings = {
   "KeyR": "reset",
 };
 
+// handle localstorage
 var blockStackerStorage = localStorage.getItem("blockStacker");
 
 if (blockStackerStorage) {
@@ -100,8 +101,7 @@ function DOMLoaded(event) {
 var lastFrame = Date.now();
 var lastInputs = inputHandler.getInputs();
 
-function tickFrame() {
-  
+function tickFrameGame() {
   const inputs = inputHandler.getInputs();
   // console.log(inputs);
   const gameEvents = game.tick(inputs, lastInputs, Date.now() - lastFrame)
@@ -114,7 +114,7 @@ function tickFrame() {
   // console.log(game.consoleRender());
   
   renderer.renderScreen({
-    "scene": "game",
+    "type": "game",
     "data": {
       "board": game,
       "frameTime": Date.now() - lastFrame,
@@ -123,19 +123,25 @@ function tickFrame() {
   
   lastFrame = Date.now();
   lastInputs = structuredClone(inputs);
-  
-  window.requestAnimationFrame(tickFrame);
 }
 
-const mousePosition = {"x": 0, "y": 0}
-
-function mouseMovement(event) {
-  mousePosition.x = event.clientX;
-  mousePosition.y = event.clientY;
+function tickFrame() {
+  /*
+  renderer.renderScreen({
+    "type": "ui",
+    "data": {
+      "scene": "home",
+      "frameTime": Date.now() - lastFrame,
+    }
+  });
+  */
+  
+  tickFrameGame();
+  
+  window.requestAnimationFrame(tickFrame);
 }
 
 window.requestAnimationFrame(tickFrame);
 document.onkeydown = function (e) { inputHandler.keyDown(e) };
 document.onkeyup = function (e) { inputHandler.keyUp(e) };
-document.addEventListener("mousemove", mouseMovement);
 addEventListener("DOMContentLoaded", DOMLoaded);
