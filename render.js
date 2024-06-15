@@ -10,6 +10,14 @@ function importImage(url) {
 
 const skins = {}
 
+const inputsList = [
+  "left", "right", 
+  "CW", "CCW", "r180",
+  "softDrop", "hardDrop",
+  "hold",
+  "reset",
+];
+
 function loadSkin(skinName, skinPaths) {
   const skin = {};
   
@@ -225,14 +233,64 @@ class blockTileMap { // can only handle 1 tilemap
 }
 
 class GameRenderer {
+  
+  useKeyMappings(keyMappings) {
+    this.keyMappings = keyMappings;
+  }
+  
   getUiElements() {
     this.uiElem = {
-      "home": {
+      "homeMenu": {
+        "container": document.getElementById("homepage"),
         "title": document.getElementById("UI-homepageTitle"),
-        "start": document.getElementById("UI-start"),
+        "play": document.getElementById("UI-play"),
         "settings": document.getElementById("UI-settings"),
         "credits": document.getElementById("UI-credits"),
         "source": document.getElementById("UI-source"),
+      },
+      "playMenu": {
+        "container": document.getElementById("playMenu"),
+        "gamemodes": document.getElementById("UI-gamemodes"),
+        "learn": document.getElementById("UI-learn"),
+        "train": document.getElementById("UI-train"),
+        "back": document.getElementById("UI-playMenu-back"),
+      },
+      "gamemodesMenu": {
+        "container": document.getElementById("gamemodesMenu"),
+        "marathon": document.getElementById("UI-marathon"),
+        "fourtyLines": document.getElementById("UI-fourtyLines"),
+        "blitz": document.getElementById("UI-blitz"),
+        "zen": document.getElementById("UI-zen"),
+        "back": document.getElementById("UI-gamemodesMenu-back"),
+      },
+      "settingsMenu": {
+        "container": document.getElementById("settingsMenu"),
+        "keybinds": document.getElementById("UI-keybinds"),
+        "handling": document.getElementById("UI-handling"),
+        "graphics": document.getElementById("UI-graphics"),
+        "audio": document.getElementById("UI-audio"),
+        "back": document.getElementById("UI-settingsMenu-back"),
+      },
+      "keybindsMenu": {
+        "container": document.getElementById("keybindsMenu"),
+        
+        "leftText": document.getElementById("UI-keybindsLeftText"),
+        "rightText": document.getElementById("UI-keybindsRightText"),
+        "CWText": document.getElementById("UI-keybindsCWText"),
+        "CCWText": document.getElementById("UI-keybindsCCWText"),
+        "r180Text": document.getElementById("UI-keybinds180Text"),
+        "softDropText": document.getElementById("UI-keybindsSoftDropText"),
+        "hardDropText": document.getElementById("UI-keybindsHardDropText"),
+        "holdText": document.getElementById("UI-keybindsHoldText"),
+        "resetText": document.getElementById("UI-keybindsResetText"),
+        
+        "keyButtonsContainer": document.getElementById("UI-keyButtonsContainer"),
+        
+        "back": document.getElementById("UI-keybindsMenu-back"),
+      },
+      "handlingMenu": {
+        "container": document.getElementById("handlingMenu"),
+        "back": document.getElementById("UI-handlingMenu-back"),
       }
     }
   }
@@ -282,14 +340,100 @@ class GameRenderer {
     }
   }
   
-  renderUI(data) {
+  updateScene(scene) {
     if (!this.uiElem) {
+      return false;
+    }
+    
+    // clean this up later using dicts
+    
+    this.uiElem.homeMenu.container.style.display = "none";
+    this.uiElem.playMenu.container.style.display = "none";
+    this.uiElem.gamemodesMenu.container.style.display = "none";
+    this.uiElem.settingsMenu.container.style.display = "none";
+    this.uiElem.keybindsMenu.container.style.display = "none";
+    this.uiElem.handlingMenu.container.style.display = "none";
+    
+    // console.log(scene);
+    switch (scene) {
+      case "homeMenu":
+        this.uiElem.homeMenu.container.style.display = "block";
+        break;
+      case "playMenu":
+        this.uiElem.playMenu.container.style.display = "block";
+        break;
+      case "gamemodesMenu":
+        this.uiElem.gamemodesMenu.container.style.display = "block";
+        break;
+      case "settingsMenu":
+        this.uiElem.settingsMenu.container.style.display = "block";
+        break;
+      case "keybindsMenu":
+        this.uiElem.keybindsMenu.container.style.display = "block";
+        break;
+      case "handlingMenu":
+        this.uiElem.handlingMenu.container.style.display = "block";
+        break;
+      case "test":
+        
+        break;
+    }
+  }
+  
+  updateKeybindButtons() {
+    const kBContainer = this.uiElem.keybindsMenu.keyButtonsContainer; // container for buttons
+    while (kBContainer.firstChild) {
+      kBContainer.removeChild(kBContainer.lastChild);
+    }
+    
+    const allKeys = Object.keys(this.keyMappings);
+    
+    this.uiElem.keybindsMenu.keyButtons = {};
+    const keyButtonsMap = this.uiElem.keybindsMenu.keyButtons;
+    
+    for (let i=0; i<inputsList.length; i++) {
+      keyButtonsMap[inputsList[i]] = [];
+    }
+    
+    for (let i=0; i<allKeys.length; i++) {
+      const keyButton = document.createElement("button");
+      
+      keyButton.classList.add("ui");
+      keyButton.classList.add("Button1");
+      keyButton.classList.add("unfinished"); // WORK ON KEYBIND DELETION
+      keyButton.innerHTML = allKeys[i];
+      kBContainer.appendChild(keyButton);
+      
+      keyButtonsMap[this.keyMappings[allKeys[i]]].push({
+        "key": "allKeys[i]",
+        "button": keyButton,
+      });
+    }
+    
+    for (let i=0; i<inputsList.length; i++) {
+      const keyButton = document.createElement("button");
+      
+      keyButton.classList.add("ui");
+      keyButton.classList.add("Button1");
+      keyButton.classList.add("unfinished"); // WORK ON KEYBIND ADDITION
+      keyButton.innerHTML = "Add Keybind";
+      kBContainer.appendChild(keyButton);
+      
+      keyButtonsMap[inputsList[i]].push({
+        "key": "addKeybind",
+        "button": keyButton,
+      });
+    }
+  }
+  
+  renderUI(data) {
+    if (!this.uiElem) { // if it's not really loaded yet and nothing is there
       return false;
     }
     
     const scene = data;
     
-    const setBoundaries = (elem, boundaries) => {
+    const setBoundaryCorners = (elem, boundaries) => {
       elem.style.left = boundaries.min.x + "px";
       elem.style.top = boundaries.min.y + "px";
       
@@ -297,23 +441,245 @@ class GameRenderer {
       elem.style.bottom = this.canvas.height - boundaries.max.y + "px";
     }
     
+    const setBoundaries = (elem, boundaries) => {
+      setBoundaryCorners(elem, {
+        "min": {
+          "x": boundaries.x,
+          "y": boundaries.y,
+        },
+        "max": {
+          "x": boundaries.x + boundaries.w, // width
+          "y": boundaries.y + boundaries.h, // height
+        }
+      });
+    }
+    
+    // PORT ALL TO CSS WHEN YOU HAVE THE TIME
+    // this is trash and takes too long omg
+    
     switch (scene) {
-      case "home":
+      case "homeMenu":
         
-        setBoundaries(this.uiElem.home.start, {
-          "min": {
-            "x": (0.5 * this.canvas.width - 0.05 * this.uiScaling),
-            "y": (0.5 * this.canvas.height - 0.05 * this.uiScaling),
-          },
-          "max": {
-            "x": (0.5 * this.canvas.width + 0.05 * this.uiScaling),
-            "y": (0.5 * this.canvas.height + 0.05 * this.uiScaling),
-          }
+        setBoundaries(this.uiElem.homeMenu.play, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
         });
         
+        setBoundaries(this.uiElem.homeMenu.settings, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.homeMenu.credits, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.homeMenu.source, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        const titleBounds = this.uiElem.homeMenu.title.getBoundingClientRect();
+        this.uiElem.homeMenu.title.style.left = (0.5 * this.canvas.width - 0.5 * titleBounds.width) + "px";
+        this.uiElem.homeMenu.title.style.top = (0.5 * this.canvas.height - (0.15 * this.uiScaling) - 0.5 * titleBounds.height ) + "px";
         
         break;
+        
+      case "playMenu":
+        
+        setBoundaries(this.uiElem.playMenu.gamemodes, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 4.2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.playMenu.learn, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.playMenu.train, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.playMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        break;
+        
+      case "gamemodesMenu":
+        
+        setBoundaries(this.uiElem.gamemodesMenu.marathon, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.gamemodesMenu.fourtyLines, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.gamemodesMenu.blitz, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.gamemodesMenu.zen, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.gamemodesMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        break;
+        
+      case "settingsMenu":
+        
+        setBoundaries(this.uiElem.settingsMenu.keybinds, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.settingsMenu.handling, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.settingsMenu.graphics, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 2.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.settingsMenu.audio, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
+          "y": (0.5 * this.canvas.height + (0.05 * this.uiScaling) * 0.1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.settingsMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        break;
+        
+      case "keybindsMenu":
+        
+        setBoundaries(this.uiElem.keybindsMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        var largestWidth = 0;
+        
+        // think about combining or something because this computes the same data twice
+        
+        for (let inputIndex = 0; inputIndex < inputsList.length; inputIndex++) {
+          const currentInput = inputsList[inputIndex];
+          const sideText = this.uiElem.keybindsMenu[currentInput + "Text"];
+          const textBounds = sideText.getBoundingClientRect();
+          if (textBounds.width > largestWidth) {
+            largestWidth = textBounds.width;
+          }
+        }
+        
+        const keyButtons = this.uiElem.keybindsMenu.keyButtons;
+        const mapKeys = Object.keys(keyButtons);
+        
+        for (let inputIndex = 0; inputIndex < inputsList.length; inputIndex++) {
+          const currentInput = inputsList[inputIndex];
+          const sideText = this.uiElem.keybindsMenu[currentInput + "Text"];
+          const textBounds = sideText.getBoundingClientRect();
+          
+          // get position
+          var xPos = largestWidth + this.uiScaling * 0.05;
+          const yPos = (0.05 * this.uiScaling) * (inputIndex + 2)
+          
+          // set bounds of text
+          sideText.style.left = (xPos - textBounds.width) + "px";
+          sideText.style.top = (yPos - 0.5 * textBounds.height) + "px";
+          
+          const xSpread = this.uiScaling * 0.02;
+          const xWidth = this.uiScaling * 0.15;
+          const yHeight = this.uiScaling * 0.04;
+          
+          const buttons = keyButtons[mapKeys[inputIndex]];
+          if (buttons) {
+            for (let buttonIndex = 0; buttonIndex < buttons.length; buttonIndex++) {
+              const currentButton = buttons[buttonIndex];
+              const currentButtonElement = currentButton.button;
+              
+              xPos += xSpread;
+              currentButtonElement.style.left = (xPos) + "px";
+              xPos += xWidth;
+              currentButtonElement.style.right = (this.canvas.width - xPos) + "px";
+              
+              currentButtonElement.style.top = (yPos - 0.5 * yHeight) + "px";
+              currentButtonElement.style.bottom = (this.canvas.height - (yPos + 0.5 * yHeight)) + "px";
+            }
+          }
+        }
+        
+        break;
+      
+      case "handlingMenu":
+        
+        setBoundaries(this.uiElem.handlingMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        break;
+        
       case "test":
+        
+        
+        
         break;
     }
   }

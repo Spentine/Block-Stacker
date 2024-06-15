@@ -15,12 +15,56 @@
 
 <canvas id="render"></canvas>
 
-<div class="ui centeredText" id="homepage"> 
+<div class="ui page" id="homepage"> 
   <h1 class="ui" id="UI-homepageTitle"> Spentris </h1>
-  <button class="ui Button1" id="UI-start"> Start </button>
+  <button class="ui Button1" id="UI-play"> Play </button>
   <button class="ui Button1" id="UI-settings"> Settings </button>
-  <button class="ui Button1" id="UI-credits"> Credits </button>
-  <button class="ui Button1" id="UI-source"> Source </button>
+  <button class="ui Button1 unfinished" id="UI-credits"> Credits </button>
+  <button class="ui Button1 unfinished" id="UI-source"> Source </button>
+</div>
+
+<div class="ui page" id="playMenu">
+  <button class="ui Button1" id="UI-gamemodes"> Game Modes </button>
+  <button class="ui Button1 unfinished" id="UI-learn"> Learn </button>
+  <button class="ui Button1 unfinished" id="UI-train"> Train </button>
+  <button class="ui Button1" id="UI-playMenu-back"> Back </button>
+</div>
+
+<div class="ui page" id="gamemodesMenu">
+  <button class="ui Button1" id="UI-marathon"> Marathon </button>
+  <button class="ui Button1 unfinished" id="UI-fourtyLines"> 40 Lines </button>
+  <button class="ui Button1 unfinished" id="UI-blitz"> Blitz </button>
+  <button class="ui Button1 unfinished" id="UI-zen"> Zen </button>
+  <button class="ui Button1" id="UI-gamemodesMenu-back"> Back </button>
+</div>
+
+<div class="ui page" id="settingsMenu">
+  <button class="ui Button1 unfinished" id="UI-keybinds"> Keybinds </button>
+  <button class="ui Button1" id="UI-handling"> Handling </button>
+  <button class="ui Button1 unfinished" id="UI-graphics"> Graphics </button>
+  <button class="ui Button1 unfinished" id="UI-audio"> Audio </button>
+  <button class="ui Button1" id="UI-settingsMenu-back"> Back </button>
+</div>
+
+<div class="ui page" id="keybindsMenu">
+  <p class="ui keybindsText" id="UI-keybindsLeftText"> Left </p>
+  <p class="ui keybindsText" id="UI-keybindsRightText"> Right </p>
+  <p class="ui keybindsText" id="UI-keybindsCWText"> Clockwise </p>
+  <p class="ui keybindsText" id="UI-keybindsCCWText"> Counterclockwise </p>
+  <p class="ui keybindsText" id="UI-keybinds180Text"> 180 Rotation </p>
+  <p class="ui keybindsText" id="UI-keybindsSoftDropText"> Soft Drop </p>
+  <p class="ui keybindsText" id="UI-keybindsHardDropText"> Hard Drop </p>
+  <p class="ui keybindsText" id="UI-keybindsHoldText"> Hold </p>
+  <p class="ui keybindsText" id="UI-keybindsResetText"> Reset </p>
+  
+  <div class="ui" id="UI-keyButtonsContainer">
+  </div>
+  
+  <button class="ui Button1" id="UI-keybindsMenu-back"> Back </button>
+</div>
+
+<div class="ui page" id="handlingMenu">
+  <button class="ui Button1" id="UI-handlingMenu-back"> Back </button>
 </div>
 
 </body>

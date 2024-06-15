@@ -92,14 +92,96 @@ if (blockStackerStorage) {
 const game = new Stacker(settings);
 const inputHandler = new InputHandler(keyMappings);
 const renderer = new GameRenderer();
+var scene = "homeMenu";
 
 function DOMLoaded(event) {
   const cRender = document.getElementById('render');
   renderer.useCanvas(cRender);
+  renderer.useKeyMappings(keyMappings);
+  renderer.getUiElements();
+  renderer.updateScene(scene);
+  
+  const UIStartElement = document.getElementById('UI-play');
+  UIStartElement.addEventListener("click", () => {
+    scene = "playMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIStartMenuBackElement = document.getElementById('UI-playMenu-back');
+  UIStartMenuBackElement.addEventListener("click", () => {
+    scene = "homeMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIGamemodesElement = document.getElementById('UI-gamemodes');
+  UIGamemodesElement.addEventListener("click", () => {
+    scene = "gamemodesMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIGamemodesMenuBackElement = document.getElementById('UI-gamemodesMenu-back');
+  UIGamemodesMenuBackElement.addEventListener("click", () => {
+    scene = "playMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIMarathonElement = document.getElementById('UI-marathon');
+  UIMarathonElement.addEventListener("click", () => {
+    scene = "game";
+    startGame();
+    renderer.updateScene(scene);
+  });
+  
+  const UISettingsElement = document.getElementById('UI-settings');
+  UISettingsElement.addEventListener("click", () => {
+    scene = "settingsMenu";
+    startGame();
+    renderer.updateScene(scene);
+  });
+  
+  const UISettingsMenuBackElement = document.getElementById('UI-settingsMenu-back');
+  UISettingsMenuBackElement.addEventListener("click", () => {
+    scene = "homeMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIKeybindsElement = document.getElementById('UI-keybinds');
+  UIKeybindsElement.addEventListener("click", () => {
+    scene = "keybindsMenu";
+    startGame();
+    renderer.updateKeybindButtons();
+    renderer.updateScene(scene);
+  });
+  
+  const UIKeybindsMenuBackElement = document.getElementById('UI-keybindsMenu-back');
+  UIKeybindsMenuBackElement.addEventListener("click", () => {
+    scene = "settingsMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UIHandlingElement = document.getElementById('UI-handling');
+  UIHandlingElement.addEventListener("click", () => {
+    scene = "handlingMenu";
+    startGame();
+    renderer.updateScene(scene);
+  });
+  
+  const UIHandlingMenuBackElement = document.getElementById('UI-handlingMenu-back');
+  UIHandlingMenuBackElement.addEventListener("click", () => {
+    scene = "settingsMenu";
+    renderer.updateScene(scene);
+  });
 }
 
-var lastFrame = Date.now();
-var lastInputs = inputHandler.getInputs();
+var lastFrame;
+var lastInputs;
+
+function startGame() {
+  
+  lastFrame = Date.now();
+  lastInputs = inputHandler.getInputs();
+
+}
 
 function tickFrameGame() {
   const inputs = inputHandler.getInputs();
@@ -126,17 +208,18 @@ function tickFrameGame() {
 }
 
 function tickFrame() {
-  /*
-  renderer.renderScreen({
-    "type": "ui",
-    "data": {
-      "scene": "home",
-      "frameTime": Date.now() - lastFrame,
-    }
-  });
-  */
   
-  tickFrameGame();
+  if (scene === "game") {
+    tickFrameGame();
+  } else {
+    renderer.renderScreen({
+      "type": "ui",
+      "data": {
+        "scene": scene,
+        "frameTime": Date.now() - lastFrame,
+      }
+    });
+  }
   
   window.requestAnimationFrame(tickFrame);
 }

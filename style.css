@@ -18,12 +18,13 @@ html, body {
 .ui {
   z-index: auto;
   position: fixed;
+  margin: 0;
 }
 
-#homepage {
+.page {
   position: fixed;
-  display: none;
   background-color: none;
+  display: none;
 }
 
 .centeredText {
@@ -31,17 +32,27 @@ html, body {
 }
 
 .ui.Button1 {
-  background-color: #bbccdd;
-  border: 2px solid #667788;
+  background-color: #a0a8b8;
+  border: 4px solid #667788;
   border-radius: 4px;
   color: black;
   text-align: center;
   text-decoration: none;
   font-size: 20px;
   font-family: inherit;
-  transition-duration: 0.1s;
+  transition-duration: 0s;
 }
 
 .ui.Button1:hover {
   background-color: #8899aa;
+}
+
+.ui.Button1.unfinished {
+  background-color: #404850;
+  border: 4px solid #303840;
+  cursor: not-allowed;
+}
+
+.keybindsText {
+  font-size: 30px;
 }
