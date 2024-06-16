@@ -59,7 +59,7 @@ var userSettings = {
     "handling": {
       "das": 120,
       "arr": 33,
-      "sdf": 5,
+      "sdf": 10,
       "dcd": 0,
       
       "msg": 0.001,
@@ -82,30 +82,47 @@ var keyMappings = {
   "KeyR": "reset",
 };
 
-// handle localstorage
-var blockStackerStorage = localStorage.getItem("blockStacker");
+function saveBlockStackerStorage() {
+  blockStackerStorage = {
+    "version": 1,
+    "userSettings": userSettings,
+  };
+  
+  const savedStorage = structuredClone(blockStackerStorage);
+  
+  // `Infinity` cannot be saved in JSON, so I subsitute it with -1.
+  if (savedStorage.userSettings.inGame.handling.sdf === Infinity) {
+    savedStorage.userSettings.inGame.handling.sdf = -1;
+  }
+  
+  localStorage.setItem("blockStacker", JSON.stringify(savedStorage));
+}
 
-if (blockStackerStorage) {
+function loadBlockStackerStorage() {
+  blockStackerStorage = JSON.parse(localStorage.getItem("blockStacker"));
   
-  try {
-    blockStackerStorage = JSON.parse(blockStackerStorage);
-  } catch {
-    console.log("blockStackerStorage ERROR!");
-    console.log(blockStackerStorage);
+  if (blockStackerStorage.userSettings.inGame.handling.sdf === -1) {
+    blockStackerStorage.userSettings.inGame.handling.sdf = Infinity;
   }
-  
-  if (blockStackerStorage.keyMappingOverrides) {
-    console.log(blockStackerStorage.keyMappingOverrides);
-    keyMappings = blockStackerStorage.keyMappingOverrides;
-  }
-  if (blockStackerStorage.settingOverrides) {
-    settings = blockStackerStorage.settingOverrides;
-  }
-} else {
+}
+
+// handle localstorage
+var blockStackerStorage = undefined;
+
+try {
+  loadBlockStackerStorage();
+} catch {
+  console.log("Unable to read blockStackerStorage");
   localStorage.setItem("blockStacker", "{}");
 }
 
-const game = new Stacker(settings);
+if (blockStackerStorage.userSettings) {
+  userSettings = blockStackerStorage.userSettings;
+}
+
+saveBlockStackerStorage();
+
+var game = null;
 const inputHandler = new InputHandler(keyMappings);
 const renderer = new GameRenderer();
 var scene = "homeMenu";
@@ -117,6 +134,7 @@ function DOMLoaded(event) {
   renderer.useUserSettings(userSettings);
   renderer.getUiElements();
   renderer.updateScene(scene);
+  renderer.saveBlockStackerStorage = saveBlockStackerStorage;
   
   const UIStartElement = document.getElementById('UI-play');
   UIStartElement.addEventListener("click", () => {
@@ -180,6 +198,7 @@ function DOMLoaded(event) {
   UIHandlingElement.addEventListener("click", () => {
     scene = "handlingMenu";
     startGame();
+    renderer.updateHandlingInputs();
     renderer.updateScene(scene);
   });
   
@@ -188,12 +207,35 @@ function DOMLoaded(event) {
     scene = "settingsMenu";
     renderer.updateScene(scene);
   });
+  
+  const UIHandlingMenuResetElement = document.getElementById('UI-handlingMenu-reset');
+  UIHandlingMenuResetElement.addEventListener("click", () => {
+    userSettings.inGame.handling = {
+      "das": 120,
+      "arr": 33,
+      "sdf": 10,
+      "dcd": 0,
+      
+      "msg": 0.001,
+      "are": 0,
+      "lca": 0,
+    };
+    
+    saveBlockStackerStorage();
+    renderer.updateHandlingInputs();
+  });
 }
 
 var lastFrame;
 var lastInputs;
 
 function startGame() {
+  
+  const playSettings = structuredClone(settings);
+
+  playSettings.handling = userSettings.inGame.handling;
+
+  game = new Stacker(playSettings);
   
   lastFrame = Date.now();
   lastInputs = inputHandler.getInputs();

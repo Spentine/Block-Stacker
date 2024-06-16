@@ -18,6 +18,17 @@ const inputsList = [
   "reset",
 ];
 
+const handlingList = {
+  "DAS": "das",
+  "ARR": "arr",
+  "SDF": "sdf",
+  "DCD": "dcd",
+  "": null,
+  "MSG": "msg",
+  "ARE": "are",
+  "LCA": "lca",
+};
+
 function loadSkin(skinName, skinPaths) {
   const skin = {};
   
@@ -312,6 +323,7 @@ class GameRenderer {
         "AREInput": document.getElementById("UI-AREInput"),
         "LCAInput": document.getElementById("UI-LCAInput"),
         "back": document.getElementById("UI-handlingMenu-back"),
+        "reset": document.getElementById("UI-handlingMenu-reset"),
       }
     }
   }
@@ -323,6 +335,7 @@ class GameRenderer {
     this.whRatio = 1;
     this.uiScaling = 1;
     this.persistentEffects = {};
+    this.saveBlockStackerStorage = function() {}
   }
   
   useCanvas(canvas) {
@@ -340,7 +353,7 @@ class GameRenderer {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.whRatio = this.canvas.width / this.canvas.height;
-      this.uiScaling = this.canvas.width;
+      this.uiScaling = Math.min(this.canvas.width, 1.5 * this.canvas.height);
     }
     this.prevCanvasWidth = this.canvas.width;
     this.prevCanvasHeight = this.canvas.height;
@@ -470,6 +483,34 @@ class GameRenderer {
         "button": keyButton,
       });
     }
+  }
+  
+  updateHandlingInputs() { // load handling values into ui
+    
+    const handlingKeys = Object.keys(handlingList);
+    
+    for (let handlingIndex=0; handlingIndex < handlingKeys.length; handlingIndex++) {
+      const inputElem = this.uiElem.handlingMenu[handlingKeys[handlingIndex] + "Input"]; // input element to display number
+      if (inputElem) {
+        const currentHandling = handlingList[handlingKeys[handlingIndex]];
+        inputElem.value = this.userSettings.inGame.handling[currentHandling]; // display correct number
+        
+        inputElem.addEventListener("change", (e) => { // when value changed
+          if (isNaN(Number(inputElem.value))) {
+            inputElem.value = this.userSettings.inGame.handling[currentHandling];
+          } else if (Number(inputElem.value) < Number(inputElem.min)) {
+            inputElem.value = inputElem.min;
+          } else if (Number(inputElem.value) > Number(inputElem.max)) {
+            inputElem.value = inputElem.max;
+          } else {
+            this.userSettings.inGame.handling[currentHandling] = Number(inputElem.value); // save value
+            inputElem.value = Number(inputElem.value);
+            this.saveBlockStackerStorage();
+          }
+        });
+      }
+    }
+    
   }
   
   renderUI(data) {
@@ -715,18 +756,7 @@ class GameRenderer {
       
       case "handlingMenu":
         
-        const handlings = {
-          "DAS": "das",
-          "ARR": "arr",
-          "SDF": "sdf",
-          "DCD": "dcd",
-          "": null,
-          "MSG": "msg",
-          "ARE": "are",
-          "LCA": "lca",
-        };
-        
-        const handlingKeys = Object.keys(handlings);
+        const handlingKeys = Object.keys(handlingList);
         
         var largestWidth = 0;
         
@@ -735,7 +765,7 @@ class GameRenderer {
           
           const sideText = this.uiElem.handlingMenu[currentHandling + "Text"];
           if (!sideText) { // if it doesn't exist for whatever reason
-            if (handlings[currentHandling] !== null) {
+            if (handlingList[currentHandling] !== null) {
               break;
             }
           } else {
@@ -753,7 +783,7 @@ class GameRenderer {
           
           const sideText = this.uiElem.handlingMenu[currentHandling + "Text"];
           if (!sideText) { // if it doesn't exist for whatever reason
-            if (handlings[currentHandling] !== null) {
+            if (handlingList[currentHandling] !== null) {
               break;
             }
           } else {
@@ -781,6 +811,13 @@ class GameRenderer {
         setBoundaries(this.uiElem.handlingMenu.back, {
           "x": (0.05 * this.uiScaling) * 0.1,
           "y": (0.05 * this.uiScaling) * 0.1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        setBoundaries(this.uiElem.handlingMenu.reset, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": this.canvas.height - (0.05 * this.uiScaling) * 0.1 - (0.05 * this.uiScaling) * 1,
           "w": (0.05 * this.uiScaling) * 2,
           "h": (0.05 * this.uiScaling) * 1,
         });
