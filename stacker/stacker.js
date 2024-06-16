@@ -533,7 +533,7 @@ class Stacker {
     /*
       builds the block stacker game
     */
-    switch (settings.ver) {
+    switch (settings.version) {
       case 1: // version 1 of settings
         
         /*

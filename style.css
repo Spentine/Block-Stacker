@@ -16,9 +16,12 @@ html, body {
 }
 
 .ui {
+  -webkit-appearance: none;
+  -moz-appearance: none;
   z-index: auto;
   position: fixed;
   margin: 0;
+  font-family: sans-serif;
 }
 
 .page {
@@ -53,6 +56,25 @@ html, body {
   cursor: not-allowed;
 }
 
-.keybindsText {
+.ui.NumberInput1 {
+  background-color: #333333;
   font-size: 30px;
+  color: #ffffff;
+}
+
+.ui.NumberInput1.unfinished {
+  background-color: #222222;
+  cursor: not-allowed;
+}
+
+.ui.keybindsText {
+  font-size: 30px;
+}
+
+.ui.handlingText {
+  font-size: 30px;
+}
+
+.ui.handlingText.unfinished {
+  color: #888888;
 }

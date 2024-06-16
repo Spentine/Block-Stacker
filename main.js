@@ -4,7 +4,7 @@ import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
 
 var settings = {
-  "ver": 1, // settings version for backwards compatibility
+  "version": 1, // settings version for backwards compatibility
   "handling": { // handling is in ms
     
  // "das": 100,
@@ -53,6 +53,22 @@ var settings = {
 };
 // console.log(JSON.stringify(settings));
 
+var userSettings = {
+  "version": 1,
+  "inGame": {
+    "handling": {
+      "das": 120,
+      "arr": 33,
+      "sdf": 5,
+      "dcd": 0,
+      
+      "msg": 0.001,
+      "are": 0,
+      "lca": 0,
+    }
+  }
+}
+
 var keyMappings = {
   "ArrowLeft": "left",
   "ArrowRight": "right",
@@ -98,6 +114,7 @@ function DOMLoaded(event) {
   const cRender = document.getElementById('render');
   renderer.useCanvas(cRender);
   renderer.useKeyMappings(keyMappings);
+  renderer.useUserSettings(userSettings);
   renderer.getUiElements();
   renderer.updateScene(scene);
   

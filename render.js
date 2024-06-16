@@ -238,6 +238,10 @@ class GameRenderer {
     this.keyMappings = keyMappings;
   }
   
+  useUserSettings(userSettings) {
+    this.userSettings = userSettings;
+  }
+  
   getUiElements() {
     this.uiElem = {
       "homeMenu": {
@@ -290,6 +294,23 @@ class GameRenderer {
       },
       "handlingMenu": {
         "container": document.getElementById("handlingMenu"),
+        "DASText": document.getElementById("UI-DASText"),
+        "ARRText": document.getElementById("UI-ARRText"),
+        "SDFText": document.getElementById("UI-SDFText"),
+        "DCDText": document.getElementById("UI-DCDText"),
+        
+        "MSGText": document.getElementById("UI-MSGText"),
+        "AREText": document.getElementById("UI-AREText"),
+        "LCAText": document.getElementById("UI-LCAText"),
+        
+        "DASInput": document.getElementById("UI-DASInput"),
+        "ARRInput": document.getElementById("UI-ARRInput"),
+        "SDFInput": document.getElementById("UI-SDFInput"),
+        "DCDInput": document.getElementById("UI-DCDInput"),
+        
+        "MSGInput": document.getElementById("UI-MSGInput"),
+        "AREInput": document.getElementById("UI-AREInput"),
+        "LCAInput": document.getElementById("UI-LCAInput"),
         "back": document.getElementById("UI-handlingMenu-back"),
       }
     }
@@ -310,6 +331,11 @@ class GameRenderer {
   }
   
   renderScreen(renderData) {
+    
+    if (!this.canvas) {
+      return null;
+    }
+    
     if (this.prevCanvasWidth != window.innerWidth || this.prevCanvasHeight != window.innerHeight) {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
@@ -347,6 +373,24 @@ class GameRenderer {
     
     // clean this up later using dicts
     
+    const menus = [
+      "homeMenu",
+      "playMenu",
+      "gamemodesMenu",
+      "settingsMenu",
+      "keybindsMenu",
+      "handlingMenu",
+    ];
+    
+    for (let i=0; i<menus.length; i++) {
+      this.uiElem[menus[i]].container.style.display = "none";
+    }
+    
+    if (menus.includes(scene)) {
+      this.uiElem[scene].container.style.display = "block";
+    }
+    
+    /*
     this.uiElem.homeMenu.container.style.display = "none";
     this.uiElem.playMenu.container.style.display = "none";
     this.uiElem.gamemodesMenu.container.style.display = "none";
@@ -378,6 +422,8 @@ class GameRenderer {
         
         break;
     }
+   
+    */
   }
   
   updateKeybindButtons() {
@@ -652,6 +698,8 @@ class GameRenderer {
               const currentButton = buttons[buttonIndex];
               const currentButtonElement = currentButton.button;
               
+              // use setBoundaries()
+              
               xPos += xSpread;
               currentButtonElement.style.left = (xPos) + "px";
               xPos += xWidth;
@@ -666,6 +714,69 @@ class GameRenderer {
         break;
       
       case "handlingMenu":
+        
+        const handlings = {
+          "DAS": "das",
+          "ARR": "arr",
+          "SDF": "sdf",
+          "DCD": "dcd",
+          "": null,
+          "MSG": "msg",
+          "ARE": "are",
+          "LCA": "lca",
+        };
+        
+        const handlingKeys = Object.keys(handlings);
+        
+        var largestWidth = 0;
+        
+        for (let handlingIndex=0; handlingIndex < handlingKeys.length; handlingIndex++) {
+          const currentHandling = handlingKeys[handlingIndex];
+          
+          const sideText = this.uiElem.handlingMenu[currentHandling + "Text"];
+          if (!sideText) { // if it doesn't exist for whatever reason
+            if (handlings[currentHandling] !== null) {
+              break;
+            }
+          } else {
+          
+            const textBounds = sideText.getBoundingClientRect();
+            if (textBounds.width > largestWidth) {
+              largestWidth = textBounds.width;
+            }
+          
+          }
+        }
+        
+        for (let handlingIndex=0; handlingIndex < handlingKeys.length; handlingIndex++) {
+          const currentHandling = handlingKeys[handlingIndex];
+          
+          const sideText = this.uiElem.handlingMenu[currentHandling + "Text"];
+          if (!sideText) { // if it doesn't exist for whatever reason
+            if (handlings[currentHandling] !== null) {
+              break;
+            }
+          } else {
+            
+            const textBounds = sideText.getBoundingClientRect();
+            
+            const xPos = largestWidth + this.uiScaling * 0.05;
+            const yPos = (0.05 * this.uiScaling) * (handlingIndex + 2)
+            
+            sideText.style.left = (xPos - textBounds.width) + "px";
+            sideText.style.top = (yPos - 0.5 * textBounds.height) + "px";
+            
+            const yHeight = 0.04 * this.uiScaling;
+            
+            setBoundaries(this.uiElem.handlingMenu[currentHandling + "Input"], {
+              "x": xPos + this.uiScaling * 0.02,
+              "y": yPos - yHeight * 0.5,
+              "w": this.uiScaling * 0.17,
+              "h": yHeight,
+            });
+          
+          }
+        }
         
         setBoundaries(this.uiElem.handlingMenu.back, {
           "x": (0.05 * this.uiScaling) * 0.1,
