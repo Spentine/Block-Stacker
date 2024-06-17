@@ -114,13 +114,12 @@ try {
 } catch {
   console.log("Unable to read blockStackerStorage");
   localStorage.setItem("blockStacker", "{}");
+  saveBlockStackerStorage();
 }
 
 if (blockStackerStorage.userSettings) {
   userSettings = blockStackerStorage.userSettings;
 }
-
-saveBlockStackerStorage();
 
 var game = null;
 const inputHandler = new InputHandler(keyMappings);
