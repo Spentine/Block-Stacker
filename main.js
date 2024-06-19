@@ -2,56 +2,7 @@ import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/
 import { SRS_mono, SRS_color } from "./stacker/rs.js"
 import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
-
-var settings = {
-  "version": 1, // settings version for backwards compatibility
-  "handling": { // handling is in ms
-    
- // "das": 100,
- // "arr": 16,
-    "das": 83,
-    "arr": 0,
-    
- // "sdf": 30,
-    "sdf": Infinity,
-    "msg": 0.001,
-    "dcd": 0,
-    "are": 0,
-    "lca": 0, // line clear ARE
-  },
-  "dimensions": {
-    "width": 10,
-    "height": 40,
-    "visualHeight": 20,
-    "spawnHeight": 22, // from bottom
-    "renderHeight": 25, // from bottom
-  },
-  "gameSettings": {
- // "seed": 0,
-    "seed": null,
-    "rotationSystem": SRS_color,
- // "gravity": 0.0001, // minos fallen per ms
-    "gravity": 0,
-    "gravityIncrease": 0.000000007, // multiply by elapsed ms and add to gravity
-    
-    "levelling": true, // overrides gravity
-    "level": 1,
-    
- // "lockDelay": 500, // ms until locks
-    "lockDelay": 500,
-  },
-  "gamePermissions": {
-    "allow180": true,
-    "hardDropAllowed": true,
-    "holdAllowed": true,
-    "infiniteMovement": false,
-  },
-  "userSettings": {
-    "next": 5,
-    "ghost": true,
-  },
-};
-// console.log(JSON.stringify(settings));
+import { gameModes } from "./modes.js"
 
 var userSettings = {
   "version": 1,
@@ -161,15 +112,21 @@ function DOMLoaded(event) {
   
   const UIMarathonElement = document.getElementById('UI-marathon');
   UIMarathonElement.addEventListener("click", () => {
-    scene = "game";
-    startGame();
+    scene = "game-marathon";
+    startGame("marathon");
+    renderer.updateScene(scene);
+  });
+  
+  const UIFourtyLinesElement = document.getElementById('UI-fourtyLines');
+  UIFourtyLinesElement.addEventListener("click", () => {
+    scene = "game-fourtyLines";
+    startGame("fourtyLines");
     renderer.updateScene(scene);
   });
   
   const UISettingsElement = document.getElementById('UI-settings');
   UISettingsElement.addEventListener("click", () => {
     scene = "settingsMenu";
-    startGame();
     renderer.updateScene(scene);
   });
   
@@ -182,7 +139,6 @@ function DOMLoaded(event) {
   const UIKeybindsElement = document.getElementById('UI-keybinds');
   UIKeybindsElement.addEventListener("click", () => {
     scene = "keybindsMenu";
-    startGame();
     renderer.updateKeybindButtons();
     renderer.updateScene(scene);
   });
@@ -196,7 +152,6 @@ function DOMLoaded(event) {
   const UIHandlingElement = document.getElementById('UI-handling');
   UIHandlingElement.addEventListener("click", () => {
     scene = "handlingMenu";
-    startGame();
     renderer.updateHandlingInputs();
     renderer.updateScene(scene);
   });
@@ -228,13 +183,25 @@ function DOMLoaded(event) {
 var lastFrame;
 var lastInputs;
 
-function startGame() {
+function startGame(mode) {
   
-  const playSettings = structuredClone(settings);
-
-  playSettings.handling = userSettings.inGame.handling;
-
+  var playSettings = null;
+  
+  switch (mode) {
+    case "marathon":
+      playSettings = gameModes.marathon;
+      break;
+    case "fourtyLines":
+      playSettings = gameModes.fourtyLines;
+      break;
+    case "blitz":
+      playSettings = gameModes.blitz;
+      break;
+  }
+  
   game = new Stacker(playSettings);
+  
+  game.setUserSettings(userSettings);
   
   lastFrame = Date.now();
   lastInputs = inputHandler.getInputs();
@@ -265,9 +232,15 @@ function tickFrameGame() {
   lastInputs = structuredClone(inputs);
 }
 
+const gameScenes = [
+  "game-marathon",
+  "game-fourtyLines",
+  "game-blitz",
+];
+
 function tickFrame() {
   
-  if (scene === "game") {
+  if (gameScenes.includes(scene)) {
     tickFrameGame();
   } else {
     renderer.renderScreen({

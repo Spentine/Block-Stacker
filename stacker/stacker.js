@@ -239,6 +239,10 @@ class Stacker {
     
     if (!this.pieceValid()) { // if something is blocking the spawning piece
       this.playing = false; // end game
+      this.end = {
+        "ending": "stackIntersection",
+        "timeStamp": Date.now(),
+      }
       return false; // unsuccessful
     }
     
@@ -529,6 +533,17 @@ class Stacker {
     }
   }
   
+  setUserSettings(userSettings) {
+    const handling = userSettings.inGame.handling;
+    this.c.das = handling.das;
+    this.c.arr = handling.arr;
+    this.c.sdf = handling.sdf;
+    this.c.msg = handling.msg;
+    this.c.dcd = handling.dcd;
+    this.c.are = handling.are;
+    this.c.lca = handling.lca;
+  }
+  
   constructor(settings) {
     /*
       builds the block stacker game
@@ -581,6 +596,11 @@ class Stacker {
         this.c.levelling = settings.gameSettings.levelling;
         this.c.level = settings.gameSettings.level; // starting level
         
+        this.c.startingBoard = settings.gameSettings.startingBoard;
+        this.c.startingQueue = settings.gameSettings.startingQueue;
+        this.c.customQueueType = settings.gameSettings.customQueueType;
+        this.c.endCondition = settings.gameSettings.endCondition;
+        
         // game permissions
         this.c.allow180 = settings.gamePermissions.allow180;
         this.c.hardDropAllowed = settings.gamePermissions.hardDropAllowed;
@@ -589,7 +609,6 @@ class Stacker {
         
         // user settings
         this.c.next = settings.userSettings.next;
-        this.c.ghost = settings.userSettings.ghost;
     }
     this.startGame();
   }
@@ -620,6 +639,18 @@ class Stacker {
     
     */
     this.playing = true; // true: game still going; false: game end
+    this.end = null; // null: still playing
+    
+    if (this.c.endCondition === null) {
+      this.endCondition = () => { return false }; // nothing
+    } else {
+      this.endCondition = this.c.endCondition;
+    }
+    /*
+      "ending": how the game ended
+      "timeStamp": game end timestamp
+    */
+    
     this.gravity = this.c.gravity; // this.c.gravity is initial gravity
     this.lockDelay = this.c.lockDelay;
     this.groundTime = 0;
@@ -855,6 +886,12 @@ class Stacker {
         this.holdPiece();
         this.events.held = true;
       }
+    }
+    
+    const endCond = this.endCondition();
+    if (endCond) {
+      this.playing = false;
+      this.end = endCond;
     }
     
     this.time += timeAdvance;
