@@ -202,8 +202,12 @@ class Stacker {
   }
   
   updateNext(pieces=this.c.rotationSystem.pieceNames) { // update the next pieces
-    while (this.next.length < this.c.next) { // while there are less pieces in the queue than the display shows
-      this.bag([...pieces]); // duplicates pieces and then uses it as input
+    if (this.c.customQueueType === "ending") {
+      // dont do anything
+    } else {
+      while (this.next.length < this.c.next) { // while there are less pieces in the queue than the display shows
+        this.bag([...pieces]); // duplicates pieces and then uses it as input
+      }
     }
   }
   
@@ -222,6 +226,15 @@ class Stacker {
   }
   
   generatePiece(pieceName) {
+    if (pieceName === undefined) {
+      this.playing = false;
+      this.end = {
+        "ending": "noPieces",
+        "timeStamp": Date.now(),
+      }
+      return null;
+    }
+    
     this.piece = {}; // initializes a dictionary
     const pieceData = this.c.rotationSystem[pieceName]; // gets piece data for spawn offset
     
@@ -355,6 +368,9 @@ class Stacker {
       }
       
       this.stats.score += actionPoints * this.levelling.level;
+      
+      const attack = this.attackFormula(linesCleared, this.piece.spin, this.combo, this.b2b, isEmptyBoard);
+      this.stats.linesSent += attack;
       
     } else {
       this.combo = -1;
@@ -614,8 +630,16 @@ class Stacker {
   }
   
   startGame() {
-    // this code does some dark magic that initializes a board with a width and height
-    this.board = Array.from({ length: this.c.height }, () => Array.from({ length: this.c.width }, () => 0));
+    if (this.c.startingBoard === null) {
+      // this code does some dark magic that initializes a board with a width and height
+      this.board = Array.from({ length: this.c.height }, () => Array.from({ length: this.c.width }, () => 0));
+    } else {
+      this.board = structuredClone(this.c.startingBoard);
+      
+      while (this.board.length < this.c.height) {
+      this.board.splice(1, 0, [0,0,0,0,0,0,0,0,0,0]);
+    }
+    }
     this.next = [];
     this.hold = {"pieceName": null, "did": 0};
     this.time = 0;
@@ -656,6 +680,22 @@ class Stacker {
     this.groundTime = 0;
     this.combo = -1;
     this.b2b = -1;
+    
+    // goofy attack formula i made up as a placeholder (not lore accurate)
+    this.attackFormula = (lines, spin, combo, b2b, pc) => {
+      if (lines === 0) {
+        return 0;
+      }
+      const baseLines = {
+        "0": [0, 0, 0],
+        "1": [0, 0, 2],
+        "2": [1, 1, 4],
+        "3": [2, 3, 6],
+        "4": [4, 6, 8],
+      }[lines][spin];
+      const b2bLevel = (b2b >= 1) + (b2b >= 3) + (b2b >= 8) + (b2b >= 24) + (b2b >= 67) + (b2b >= 185) + (b2b >= 504) + (b2b >= 1370);
+      return (pc * 10 + Math.floor(combo / 3) + baseLines + b2bLevel);
+    }
     
     this.levelling = {
       "level": this.c.level,
@@ -707,10 +747,14 @@ class Stacker {
     this.stats = {
       "linesCleared": 0,
       "piecesPlaced": 0,
+      "linesSent": 0,
       "score": 0,
       "attack": 0,
     }
     
+    if (this.c.startingQueue !== null) { // if these is a starting queue
+      this.next = structuredClone(this.c.startingQueue); // use the starting queue as the start
+    }
     this.updateNext();
     this.newPiece();
     this.updateNext();

@@ -273,10 +273,17 @@ class GameRenderer {
       "gamemodesMenu": {
         "container": document.getElementById("gamemodesMenu"),
         "marathon": document.getElementById("UI-marathon"),
-        "fourtyLines": document.getElementById("UI-fourtyLines"),
+        "fortyLines": document.getElementById("UI-fortyLines"),
         "blitz": document.getElementById("UI-blitz"),
         "zen": document.getElementById("UI-zen"),
         "back": document.getElementById("UI-gamemodesMenu-back"),
+      },
+      "trainMenu": {
+        "container": document.getElementById("trainMenu"),
+        "easy": document.getElementById("UI-trainMenu-easy"),
+        "medium": document.getElementById("UI-trainMenu-medium"),
+        "hard": document.getElementById("UI-trainMenu-hard"),
+        "back": document.getElementById("UI-trainMenu-back"),
       },
       "settingsMenu": {
         "container": document.getElementById("settingsMenu"),
@@ -324,7 +331,7 @@ class GameRenderer {
         "LCAInput": document.getElementById("UI-LCAInput"),
         "back": document.getElementById("UI-handlingMenu-back"),
         "reset": document.getElementById("UI-handlingMenu-reset"),
-      }
+      },
     }
   }
   
@@ -390,6 +397,7 @@ class GameRenderer {
       "homeMenu",
       "playMenu",
       "gamemodesMenu",
+      "trainMenu",
       "settingsMenu",
       "keybindsMenu",
       "handlingMenu",
@@ -622,7 +630,7 @@ class GameRenderer {
           "h": (0.05 * this.uiScaling) * 2,
         });
         
-        setBoundaries(this.uiElem.gamemodesMenu.fourtyLines, {
+        setBoundaries(this.uiElem.gamemodesMenu.fortyLines, {
           "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 0.1),
           "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 2.1),
           "w": (0.05 * this.uiScaling) * 2,
@@ -818,6 +826,38 @@ class GameRenderer {
         setBoundaries(this.uiElem.handlingMenu.reset, {
           "x": (0.05 * this.uiScaling) * 0.1,
           "y": this.canvas.height - (0.05 * this.uiScaling) * 0.1 - (0.05 * this.uiScaling) * 1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        break;
+        
+      case "trainMenu":
+        
+        setBoundaries(this.uiElem.trainMenu.easy, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 3.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.trainMenu.medium, {
+          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.trainMenu.hard, {
+          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 1.1),
+          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 2,
+        });
+        
+        setBoundaries(this.uiElem.trainMenu.back, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": (0.05 * this.uiScaling) * 0.1,
           "w": (0.05 * this.uiScaling) * 2,
           "h": (0.05 * this.uiScaling) * 1,
         });
@@ -1140,6 +1180,11 @@ class GameRenderer {
       "lines: " + game.stats.linesCleared,
       position.x + ((game.c.width + 1) * tileSize),
       position.y + (((game.c.visualHeight) - 0) * tileSize),
+    );
+    this.ctx.fillText(
+      "attack: " + game.stats.linesSent,
+      position.x + ((game.c.width + 1) * tileSize),
+      position.y + (((game.c.visualHeight) + 1) * tileSize),
     );
     
     // persistentEffects

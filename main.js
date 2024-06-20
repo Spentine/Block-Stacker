@@ -2,7 +2,7 @@ import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/
 import { SRS_mono, SRS_color } from "./stacker/rs.js"
 import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
-import { gameModes } from "./modes.js"
+import { gameModes, easyPuzzles } from "./modes.js"
 
 var userSettings = {
   "version": 1,
@@ -117,10 +117,29 @@ function DOMLoaded(event) {
     renderer.updateScene(scene);
   });
   
-  const UIFourtyLinesElement = document.getElementById('UI-fourtyLines');
-  UIFourtyLinesElement.addEventListener("click", () => {
-    scene = "game-fourtyLines";
-    startGame("fourtyLines");
+  const UIFortyLinesElement = document.getElementById('UI-fortyLines');
+  UIFortyLinesElement.addEventListener("click", () => {
+    scene = "game-fortyLines";
+    startGame("fortyLines");
+    renderer.updateScene(scene);
+  });
+  
+  const UITrainElement = document.getElementById('UI-train');
+  UITrainElement.addEventListener("click", () => {
+    scene = "trainMenu";
+    renderer.updateScene(scene);
+  });
+  
+  const UITrainEasyElement = document.getElementById('UI-trainMenu-easy');
+  UITrainEasyElement.addEventListener("click", () => {
+    scene = "game-puzzleEasy";
+    startGame("puzzleEasy");
+    renderer.updateScene(scene);
+  });
+  
+  const UITrainMenuBackElement = document.getElementById('UI-trainMenu-back');
+  UITrainMenuBackElement.addEventListener("click", () => {
+    scene = "playMenu";
     renderer.updateScene(scene);
   });
   
@@ -182,6 +201,7 @@ function DOMLoaded(event) {
 
 var lastFrame;
 var lastInputs;
+var currentPuzzle;
 
 function startGame(mode) {
   
@@ -191,27 +211,43 @@ function startGame(mode) {
     case "marathon":
       playSettings = gameModes.marathon;
       break;
-    case "fourtyLines":
-      playSettings = gameModes.fourtyLines;
+    case "fortyLines":
+      playSettings = gameModes.fortyLines;
       break;
     case "blitz":
       playSettings = gameModes.blitz;
       break;
+    case "puzzleEasy":
+      currentPuzzle = Math.floor(Math.random() * easyPuzzles.length);
+      playSettings = easyPuzzles[currentPuzzle].outputData();
+      break;
   }
   
+  startGameSettings(playSettings);
+  
+  /*
   game = new Stacker(playSettings);
   
   game.setUserSettings(userSettings);
   
   lastFrame = Date.now();
   lastInputs = inputHandler.getInputs();
+  */
+}
 
+function startGameSettings(settings) {
+  game = new Stacker(settings);
+  
+  game.setUserSettings(userSettings);
+  
+  lastFrame = Date.now();
+  lastInputs = inputHandler.getInputs();
 }
 
 function tickFrameGame() {
   const inputs = inputHandler.getInputs();
   // console.log(inputs);
-  const gameEvents = game.tick(inputs, lastInputs, Date.now() - lastFrame)
+  const gameEvents = game.tick(inputs, lastInputs, Date.now() - lastFrame);
   
   /*
   if (JSON.stringify(gameEvents) !== '{"playing":true}') {
@@ -230,17 +266,30 @@ function tickFrameGame() {
   
   lastFrame = Date.now();
   lastInputs = structuredClone(inputs);
+  
+  if (scene === "game-puzzleEasy") {
+    if (game.end){
+      if (game.end.ending === "noPieces") {
+        console.log("Failed Easy Puzzle " + currentPuzzle);
+        startGameSettings(easyPuzzles[currentPuzzle].outputData());
+      } else {
+        console.log("Passed Easy Puzzle " + currentPuzzle);
+        startGame("puzzleEasy");
+      }
+    }
+  }
 }
 
 const gameScenes = [
   "game-marathon",
-  "game-fourtyLines",
+  "game-fortyLines",
   "game-blitz",
 ];
 
 function tickFrame() {
   
-  if (gameScenes.includes(scene)) {
+//if (gameScenes.includes(scene)) {
+  if (scene.substring(0, 5) === "game-") {
     tickFrameGame();
   } else {
     renderer.renderScreen({
