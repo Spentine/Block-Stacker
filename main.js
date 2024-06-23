@@ -32,6 +32,8 @@ var userSettings = {
   }
 }
 
+const defaultUserSettings = structuredClone(userSettings);
+
 function saveBlockStackerStorage() {
   
   blockStackerStorage = {
@@ -68,13 +70,13 @@ try {
   if (blockStackerStorage.userSettings) {
     userSettings = blockStackerStorage.userSettings;
   } else {
-    blockStackerStorage.userSettings = userSettings;
+    blockStackerStorage.userSettings = defaultUserSettings;
   }
   
   if (blockStackerStorage.userSettings.inGame.keyMappings) {
     userSettings.inGame.keyMappings = blockStackerStorage.userSettings.inGame.keyMappings;
   } else {
-    blockStackerStorage.userSettings.inGame.keyMappings = userSettings.inGame.keyMappings;
+    blockStackerStorage.userSettings.inGame.keyMappings = defaultUserSettings.inGame.keyMappings;
   }
   
 } catch {
@@ -192,18 +194,7 @@ function DOMLoaded(event) {
   
   const UIKeybindsMenuResetElement = document.getElementById('UI-keybindsMenu-reset');
   UIKeybindsMenuResetElement.addEventListener("click", () => {
-    userSettings.inGame.keyMappings = {
-      "ArrowLeft": "left",
-      "ArrowRight": "right",
-      "ArrowDown": "softDrop",
-      "Space": "hardDrop",
-      "ArrowUp": "CW",
-      "KeyX": "CW",
-      "KeyZ": "CCW",
-      "KeyA": "r180",
-      "KeyC": "hold",
-      "KeyR": "reset",
-    };
+    userSettings.inGame.keyMappings = defaultUserSettings.inGame.keyMappings;
     renderer.updateKeybindButtons();
     
     saveBlockStackerStorage();
@@ -225,16 +216,7 @@ function DOMLoaded(event) {
   
   const UIHandlingMenuResetElement = document.getElementById('UI-handlingMenu-reset');
   UIHandlingMenuResetElement.addEventListener("click", () => {
-    userSettings.inGame.handling = {
-      "das": 120,
-      "arr": 33,
-      "sdf": 10,
-      "dcd": 0,
-      
-      "msg": 0.001,
-      "are": 0,
-      "lca": 0,
-    };
+    userSettings.inGame.handling = defaultUserSettings.inGame.handling;
     
     saveBlockStackerStorage();
     renderer.updateHandlingInputs();
