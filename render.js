@@ -29,6 +29,25 @@ const handlingList = {
   "LCA": "lca",
 };
 
+const trainingPacksList = [
+  {
+    "title": "Easy TSD Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "easyTSDPuzzles",
+    },
+  },
+  {
+    "title": "Medium TSD Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "mediumTSDPuzzles",
+    },
+  },
+];
+
 function loadSkin(skinName, skinPaths) {
   const skin = {};
   
@@ -245,10 +264,6 @@ class blockTileMap { // can only handle 1 tilemap
 
 class GameRenderer {
   
-  useKeyMappings(keyMappings) {
-    this.keyMappings = keyMappings;
-  }
-  
   useUserSettings(userSettings) {
     this.userSettings = userSettings;
   }
@@ -280,9 +295,8 @@ class GameRenderer {
       },
       "trainMenu": {
         "container": document.getElementById("trainMenu"),
-        "easy": document.getElementById("UI-trainMenu-easy"),
-        "medium": document.getElementById("UI-trainMenu-medium"),
-        "hard": document.getElementById("UI-trainMenu-hard"),
+        "trainingPacksContainer": document.getElementById("UI-trainingPacksContainer"),
+        "trainingPacksArray": [],
         "back": document.getElementById("UI-trainMenu-back"),
       },
       "settingsMenu": {
@@ -295,6 +309,7 @@ class GameRenderer {
       },
       "keybindsMenu": {
         "container": document.getElementById("keybindsMenu"),
+        "warning": document.getElementById("UI-keybindsMenu-warning"),
         
         "leftText": document.getElementById("UI-keybindsLeftText"),
         "rightText": document.getElementById("UI-keybindsRightText"),
@@ -308,6 +323,7 @@ class GameRenderer {
         
         "keyButtonsContainer": document.getElementById("UI-keyButtonsContainer"),
         
+        "reset": document.getElementById("UI-keybindsMenu-reset"),
         "back": document.getElementById("UI-keybindsMenu-back"),
       },
       "handlingMenu": {
@@ -343,6 +359,25 @@ class GameRenderer {
     this.uiScaling = 1;
     this.persistentEffects = {};
     this.saveBlockStackerStorage = function() {}
+    this.startGame = null;
+    this.pendingKeydown = {
+      "keybind": [],
+    }
+    
+    document.addEventListener("keydown", (e) => {
+      const keys = Object.keys(this.pendingKeydown);
+      
+      for (let i=0; i<keys.length; i++) {
+        
+        const list = this.pendingKeydown[keys];
+        
+        for (let j=0; j<list.length; j++) {
+          list[j](e);
+        }
+        
+      }
+      
+    });
   }
   
   useCanvas(canvas) {
@@ -393,15 +428,7 @@ class GameRenderer {
     
     // clean this up later using dicts
     
-    const menus = [
-      "homeMenu",
-      "playMenu",
-      "gamemodesMenu",
-      "trainMenu",
-      "settingsMenu",
-      "keybindsMenu",
-      "handlingMenu",
-    ];
+    const menus = Object.keys(this.uiElem);
     
     for (let i=0; i<menus.length; i++) {
       this.uiElem[menus[i]].container.style.display = "none";
@@ -453,7 +480,7 @@ class GameRenderer {
       kBContainer.removeChild(kBContainer.lastChild);
     }
     
-    const allKeys = Object.keys(this.keyMappings);
+    const allKeys = Object.keys(this.userSettings.inGame.keyMappings);
     
     this.uiElem.keybindsMenu.keyButtons = {};
     const keyButtonsMap = this.uiElem.keybindsMenu.keyButtons;
@@ -467,13 +494,20 @@ class GameRenderer {
       
       keyButton.classList.add("ui");
       keyButton.classList.add("Button1");
-      keyButton.classList.add("unfinished"); // WORK ON KEYBIND DELETION
       keyButton.innerHTML = allKeys[i];
       kBContainer.appendChild(keyButton);
       
-      keyButtonsMap[this.keyMappings[allKeys[i]]].push({
+      keyButtonsMap[this.userSettings.inGame.keyMappings[allKeys[i]]].push({
         "key": "allKeys[i]",
         "button": keyButton,
+      });
+      
+      const keyIndex = i;
+      
+      keyButton.addEventListener("click", () => {
+        delete this.userSettings.inGame.keyMappings[allKeys[keyIndex]];
+        this.saveBlockStackerStorage();
+        this.updateKeybindButtons();
       });
     }
     
@@ -482,13 +516,64 @@ class GameRenderer {
       
       keyButton.classList.add("ui");
       keyButton.classList.add("Button1");
-      keyButton.classList.add("unfinished"); // WORK ON KEYBIND ADDITION
       keyButton.innerHTML = "Add Keybind";
       kBContainer.appendChild(keyButton);
       
       keyButtonsMap[inputsList[i]].push({
         "key": "addKeybind",
         "button": keyButton,
+      });
+      
+      const currentAction = inputsList[i];
+      let active = true;
+      
+      keyButton.addEventListener("click", () => {
+        keyButton.innerHTML = "Awaiting Input...";
+        /*
+        document.addEventListener("keydown", (e) => { // MEMORY LEAK
+          if (active && !e.repeat) {
+            this.userSettings.inGame.keyMappings[e.code] = currentAction;
+            this.saveBlockStackerStorage();
+            this.updateKeybindButtons();
+            active = false;
+          }
+        });
+        */
+        
+        this.pendingKeydown.keybind.push((e) => {
+          if (active && !e.repeat) {
+            this.userSettings.inGame.keyMappings[e.code] = currentAction;
+            this.saveBlockStackerStorage();
+            this.updateKeybindButtons();
+            active = false;
+          }
+        })
+      });
+    }
+  }
+  
+  updateTrainingPuzzles() {
+    const tPContainer = this.uiElem.trainMenu.trainingPacksContainer; // training pack container
+    
+    this.uiElem.trainMenu.trainingPacksArray = [];
+    const tPArray = this.uiElem.trainMenu.trainingPacksArray;
+    
+    while (tPContainer.firstChild) {
+      tPContainer.removeChild(tPContainer.lastChild);
+    }
+    
+    for (let i=0; i<trainingPacksList.length; i++) {
+      const packButton = document.createElement("button");
+      
+      packButton.classList.add("ui");
+      packButton.classList.add("Button1");
+      packButton.innerHTML = trainingPacksList[i]["title"];
+      tPContainer.appendChild(packButton);
+      tPArray.push(packButton);
+      
+      const buttonData = trainingPacksList[i];
+      packButton.addEventListener("click", () => {
+        this.startGame(buttonData["scene"], buttonData["startParam"]);
       });
     }
   }
@@ -760,6 +845,16 @@ class GameRenderer {
           }
         }
         
+        setBoundaries(this.uiElem.keybindsMenu.reset, {
+          "x": (0.05 * this.uiScaling) * 0.1,
+          "y": this.canvas.height - (0.05 * this.uiScaling) * 0.1 - (0.05 * this.uiScaling) * 1,
+          "w": (0.05 * this.uiScaling) * 2,
+          "h": (0.05 * this.uiScaling) * 1,
+        });
+        
+        this.uiElem.keybindsMenu.warning.style.top = (0.02 * this.uiScaling) + "px";
+        this.uiElem.keybindsMenu.warning.style.left = (0.2 * this.uiScaling) + "px";
+        
         break;
       
       case "handlingMenu":
@@ -834,26 +929,17 @@ class GameRenderer {
         
       case "trainMenu":
         
-        setBoundaries(this.uiElem.trainMenu.easy, {
-          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 3.1),
-          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
-          "w": (0.05 * this.uiScaling) * 2,
-          "h": (0.05 * this.uiScaling) * 2,
-        });
-        
-        setBoundaries(this.uiElem.trainMenu.medium, {
-          "x": (0.5 * this.canvas.width - (0.05 * this.uiScaling) * 1),
-          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
-          "w": (0.05 * this.uiScaling) * 2,
-          "h": (0.05 * this.uiScaling) * 2,
-        });
-        
-        setBoundaries(this.uiElem.trainMenu.hard, {
-          "x": (0.5 * this.canvas.width + (0.05 * this.uiScaling) * 1.1),
-          "y": (0.5 * this.canvas.height - (0.05 * this.uiScaling) * 1),
-          "w": (0.05 * this.uiScaling) * 2,
-          "h": (0.05 * this.uiScaling) * 2,
-        });
+        const tPArray = this.uiElem.trainMenu.trainingPacksArray;
+        for (let packIndex=0; packIndex<tPArray.length; packIndex++) {
+          const pack = tPArray[packIndex];
+          
+          setBoundaries(pack, {
+            "x": (0.02 * this.uiScaling),
+            "y": (0.1 * this.uiScaling) + packIndex * (0.07 * this.uiScaling),
+            "w": (0.25 * this.uiScaling),
+            "h": (0.06 * this.uiScaling),
+          });
+        }
         
         setBoundaries(this.uiElem.trainMenu.back, {
           "x": (0.05 * this.uiScaling) * 0.1,
@@ -1160,7 +1246,7 @@ class GameRenderer {
     }
     
     this.ctx.fillStyle = "#fff";
-    this.ctx.font = tileSize + "px sans-serif";
+    this.ctx.font = tileSize + "px Bloxyl";
     this.ctx.fillText(
       "time: " + msToTime(game.time),
       position.x + ((game.c.width + 1) * tileSize),
@@ -1320,7 +1406,7 @@ class GameRenderer {
     // console.log(gameActionDisp);
     
     this.ctx.fillStyle = "#fff";
-    this.ctx.font = tileSize + "px sans-serif";
+    this.ctx.font = tileSize + "px Bloxyl";
     
     const eventExpiryTime = 1500;
     
@@ -1345,5 +1431,7 @@ class GameRenderer {
     
   }
 }
+
+
 
 export { GameRenderer };

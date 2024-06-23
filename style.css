@@ -1,3 +1,10 @@
+@font-face {
+  font-family: "Bloxyl";
+  src:
+    local("Bloxyl"),
+    url("./assets/font/Bloxyl.otf");
+}
+
 html, body {
   background-color: #000000;
   color: #ffffff;
@@ -5,7 +12,7 @@ html, body {
   margin: 0 !important;
   padding: 3 !important;
   overflow: hidden;
-  font-family: "sans-serif";
+  font-family: "Bloxyl";
 }
 
 
@@ -21,7 +28,7 @@ html, body {
   z-index: auto;
   position: fixed;
   margin: 0;
-  font-family: sans-serif;
+  font-family: "Bloxyl";
 }
 
 .page {
@@ -77,4 +84,8 @@ html, body {
 
 .ui.handlingText.unfinished {
   color: #888888;
+}
+
+.ui.text {
+  font-size: 20px;
 }

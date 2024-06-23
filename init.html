@@ -39,14 +39,14 @@
 </div>
 
 <div class="ui page" id="trainMenu">
-  <button class="ui Button1" id="UI-trainMenu-easy"> Easy </button>
-  <button class="ui Button1 unfinished" id="UI-trainMenu-medium"> Medium </button>
-  <button class="ui Button1 unfinished" id="UI-trainMenu-hard"> Hard </button>
+  <div class="ui" id="UI-trainingPacksContainer">
+  </div>
+  
   <button class="ui Button1" id="UI-trainMenu-back"> Back </button>
 </div>
 
 <div class="ui page" id="settingsMenu">
-  <button class="ui Button1 unfinished" id="UI-keybinds"> Keybinds </button>
+  <button class="ui Button1" id="UI-keybinds"> Keybinds </button>
   <button class="ui Button1" id="UI-handling"> Handling </button>
   <button class="ui Button1 unfinished" id="UI-graphics"> Graphics </button>
   <button class="ui Button1 unfinished" id="UI-audio"> Audio </button>
@@ -54,6 +54,10 @@
 </div>
 
 <div class="ui page" id="keybindsMenu">
+  <p class="ui text" id="UI-keybindsMenu-warning"> Warning! This shit is broken asf but it gets the job done </p>
+  
+  <!-- TODO: FIX THE MENU!!!! -->
+  
   <p class="ui keybindsText" id="UI-keybindsLeftText"> Left </p>
   <p class="ui keybindsText" id="UI-keybindsRightText"> Right </p>
   <p class="ui keybindsText" id="UI-keybindsCWText"> Clockwise </p>
@@ -62,11 +66,12 @@
   <p class="ui keybindsText" id="UI-keybindsSoftDropText"> Soft Drop </p>
   <p class="ui keybindsText" id="UI-keybindsHardDropText"> Hard Drop </p>
   <p class="ui keybindsText" id="UI-keybindsHoldText"> Hold </p>
-  <p class="ui keybindsText" id="UI-keybindsResetText"> Reset </p>
+  <p class="ui keybindsText" id="UI-keybindsResetText"> Reset Board </p>
   
   <div class="ui" id="UI-keyButtonsContainer">
   </div>
   
+  <button class="ui Button1" id="UI-keybindsMenu-reset"> Reset </button>
   <button class="ui Button1" id="UI-keybindsMenu-back"> Back </button>
 </div>
 

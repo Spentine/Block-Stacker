@@ -2,7 +2,7 @@ import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/
 import { SRS_mono, SRS_color } from "./stacker/rs.js"
 import { GameRenderer } from "./render.js"
 import { InputHandler } from "./input.js"
-import { gameModes, easyPuzzles } from "./modes.js"
+import { gameModes, puzzles } from "./modes.js"
 
 var userSettings = {
   "version": 1,
@@ -10,30 +10,30 @@ var userSettings = {
     "handling": {
       "das": 120,
       "arr": 33,
-      "sdf": 10,
+      "sdf": Infinity,
       "dcd": 0,
       
       "msg": 0.001,
       "are": 0,
       "lca": 0,
-    }
+    },
+    "keyMappings": {
+      "ArrowLeft": "left",
+      "ArrowRight": "right",
+      "ArrowDown": "softDrop",
+      "Space": "hardDrop",
+      "ArrowUp": "CW",
+      "KeyX": "CW",
+      "KeyZ": "CCW",
+      "KeyA": "r180",
+      "KeyC": "hold",
+      "KeyR": "reset",
+    },
   }
 }
 
-var keyMappings = {
-  "ArrowLeft": "left",
-  "ArrowRight": "right",
-  "ArrowDown": "softDrop",
-  "Space": "hardDrop",
-  "ArrowUp": "CW",
-  "KeyX": "CW",
-  "KeyZ": "CCW",
-  "KeyA": "r180",
-  "KeyC": "hold",
-  "KeyR": "reset",
-};
-
 function saveBlockStackerStorage() {
+  
   blockStackerStorage = {
     "version": 1,
     "userSettings": userSettings,
@@ -62,28 +62,43 @@ var blockStackerStorage = undefined;
 
 try {
   loadBlockStackerStorage();
+  
+  // shorten this later
+  
+  if (blockStackerStorage.userSettings) {
+    userSettings = blockStackerStorage.userSettings;
+  } else {
+    blockStackerStorage.userSettings = userSettings;
+  }
+  
+  if (blockStackerStorage.userSettings.inGame.keyMappings) {
+    userSettings.inGame.keyMappings = blockStackerStorage.userSettings.inGame.keyMappings;
+  } else {
+    blockStackerStorage.userSettings.inGame.keyMappings = userSettings.inGame.keyMappings;
+  }
+  
 } catch {
   console.log("Unable to read blockStackerStorage");
   localStorage.setItem("blockStacker", "{}");
   saveBlockStackerStorage();
 }
 
-if (blockStackerStorage.userSettings) {
-  userSettings = blockStackerStorage.userSettings;
-}
-
 var game = null;
-const inputHandler = new InputHandler(keyMappings);
+const inputHandler = new InputHandler(userSettings.inGame.keyMappings);
 const renderer = new GameRenderer();
 var scene = "homeMenu";
 
 function DOMLoaded(event) {
   const cRender = document.getElementById('render');
   renderer.useCanvas(cRender);
-  renderer.useKeyMappings(keyMappings);
   renderer.useUserSettings(userSettings);
   renderer.getUiElements();
   renderer.updateScene(scene);
+  renderer.startGame = (s, data) => {
+    scene = s;
+    startGame(data);
+    renderer.updateScene(scene);
+  }
   renderer.saveBlockStackerStorage = saveBlockStackerStorage;
   
   const UIStartElement = document.getElementById('UI-play');
@@ -113,29 +128,36 @@ function DOMLoaded(event) {
   const UIMarathonElement = document.getElementById('UI-marathon');
   UIMarathonElement.addEventListener("click", () => {
     scene = "game-marathon";
-    startGame("marathon");
+    startGame({
+      "mode": "marathon"
+    });
     renderer.updateScene(scene);
   });
   
   const UIFortyLinesElement = document.getElementById('UI-fortyLines');
   UIFortyLinesElement.addEventListener("click", () => {
     scene = "game-fortyLines";
-    startGame("fortyLines");
+    startGame({
+      "mode": "fortyLines"
+    });
     renderer.updateScene(scene);
   });
   
   const UITrainElement = document.getElementById('UI-train');
   UITrainElement.addEventListener("click", () => {
     scene = "trainMenu";
+    renderer.updateTrainingPuzzles();
     renderer.updateScene(scene);
   });
   
+  /*
   const UITrainEasyElement = document.getElementById('UI-trainMenu-easy');
   UITrainEasyElement.addEventListener("click", () => {
     scene = "game-puzzleEasy";
     startGame("puzzleEasy");
     renderer.updateScene(scene);
   });
+  */
   
   const UITrainMenuBackElement = document.getElementById('UI-trainMenu-back');
   UITrainMenuBackElement.addEventListener("click", () => {
@@ -166,6 +188,26 @@ function DOMLoaded(event) {
   UIKeybindsMenuBackElement.addEventListener("click", () => {
     scene = "settingsMenu";
     renderer.updateScene(scene);
+  });
+  
+  const UIKeybindsMenuResetElement = document.getElementById('UI-keybindsMenu-reset');
+  UIKeybindsMenuResetElement.addEventListener("click", () => {
+    userSettings.inGame.keyMappings = {
+      "ArrowLeft": "left",
+      "ArrowRight": "right",
+      "ArrowDown": "softDrop",
+      "Space": "hardDrop",
+      "ArrowUp": "CW",
+      "KeyX": "CW",
+      "KeyZ": "CCW",
+      "KeyA": "r180",
+      "KeyC": "hold",
+      "KeyR": "reset",
+    };
+    renderer.updateKeybindButtons();
+    
+    saveBlockStackerStorage();
+    renderer.updateHandlingInputs();
   });
   
   const UIHandlingElement = document.getElementById('UI-handling');
@@ -202,12 +244,13 @@ function DOMLoaded(event) {
 var lastFrame;
 var lastInputs;
 var currentPuzzle;
+var puzzleSet;
 
-function startGame(mode) {
+function startGame(data) {
   
   var playSettings = null;
   
-  switch (mode) {
+  switch (data.mode) {
     case "marathon":
       playSettings = gameModes.marathon;
       break;
@@ -217,9 +260,10 @@ function startGame(mode) {
     case "blitz":
       playSettings = gameModes.blitz;
       break;
-    case "puzzleEasy":
-      currentPuzzle = Math.floor(Math.random() * easyPuzzles.length);
-      playSettings = easyPuzzles[currentPuzzle].outputData();
+    case "puzzleMode":
+      puzzleSet = data.puzzleSet;
+      currentPuzzle = Math.floor(Math.random() * puzzles[puzzleSet].length);
+      playSettings = puzzles[puzzleSet][currentPuzzle].outputData();
       break;
   }
   
@@ -267,14 +311,17 @@ function tickFrameGame() {
   lastFrame = Date.now();
   lastInputs = structuredClone(inputs);
   
-  if (scene === "game-puzzleEasy") {
+  if (scene === "game-puzzleMode") {
     if (game.end){
       if (game.end.ending === "noPieces") {
-        console.log("Failed Easy Puzzle " + currentPuzzle);
-        startGameSettings(easyPuzzles[currentPuzzle].outputData());
+        console.log("Failed Puzzle " + currentPuzzle);
+        startGameSettings(puzzles[puzzleSet][currentPuzzle].outputData());
       } else {
-        console.log("Passed Easy Puzzle " + currentPuzzle);
-        startGame("puzzleEasy");
+        console.log("Passed Puzzle " + currentPuzzle);
+        startGame({
+          "mode": "puzzleMode",
+          "puzzleSet": puzzleSet,
+        });
       }
     }
   }
@@ -305,6 +352,6 @@ function tickFrame() {
 }
 
 window.requestAnimationFrame(tickFrame);
-document.onkeydown = function (e) { inputHandler.keyDown(e) };
-document.onkeyup = function (e) { inputHandler.keyUp(e) };
-addEventListener("DOMContentLoaded", DOMLoaded);
+document.addEventListener("keydown", function (e) { inputHandler.keyDown(e) });
+document.addEventListener("keyup", function (e) { inputHandler.keyUp(e) });
+document.addEventListener("DOMContentLoaded", DOMLoaded);

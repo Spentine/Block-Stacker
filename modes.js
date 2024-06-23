@@ -1,5 +1,15 @@
 import { SRS_mono, SRS_color } from "./stacker/rs.js"
 
+function mirrorPuzzles(puzzles) {
+  const originalLength = puzzles.length;
+  for (let i=0; i<originalLength; i++) {
+    const c = puzzles[i].cloneSelf();
+    c.mirrorSelf();
+    // console.log(c);
+    puzzles.push(c);
+  }
+}
+
 const template = {
   "version": 1, // settings version for backwards compatibility
   
@@ -304,8 +314,7 @@ class Puzzle {
   }
 }
 
-// 17
-const easyPuzzles = [
+const easyTSDPuzzles = [
   
   // === TSDS ===
   
@@ -1363,7 +1372,71 @@ const easyPuzzles = [
       "requiredLines": 8,
     },
   }),
+];
+
+const twoPieceTSDPuzzles = [
   
+  // == O-1 ==
+  
+  // S-1
+  new Puzzle({
+    "type": "sendLines",
+    "board": {"board":[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,1,1],[1,1,1,1,0,1,0,0,1,1],[1,1,1,1,0,1,1,1,1,1],[1,1,1,1,0,1,1,1,1,1],[1,1,1,1,0,1,1,1,1,1],[1,1,1,1,0,1,1,1,1,1],[1,1,1,1,0,1,1,1,1,1],[1,0,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0]],"type":"mono"},
+    "pieces": ["O", "S", "T"],
+    "data": {
+      "hold": false,
+      "requiredLines": 4,
+    },
+  }),
+  // J-3
+  new Puzzle({
+    "type": "sendLines",
+    "board": {"board":[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,1,1,1],[1,1,1,0,1,0,0,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0]],"type":"mono"},
+    "pieces": ["O", "J", "T"],
+    "data": {
+      "hold": false,
+      "requiredLines": 4,
+    },
+  }),
+  // Z-2
+  new Puzzle({
+    "type": "sendLines",
+    "board": {"board":[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0],[1,1,1,1,1,0,0,0,0,0],[1,1,1,1,1,1,0,1,0,0],[1,1,1,1,1,1,0,1,1,1],[1,1,1,1,1,1,0,1,1,1],[1,0,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,0,1]],"type":"mono"},
+    "pieces": ["O", "Z", "T"],
+    "data": {
+      "hold": false,
+      "requiredLines": 4,
+    },
+  }),
+  
+]
+
+const kaidanTSDPuzzles = [
+  
+  // KAIDAN
+  
+  // O-1
+  new Puzzle({
+    "type": "sendLines",
+    "board": {"board":[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0],[1,1,1,0,0,0,0,0,0,0],[1,1,1,1,1,1,0,0,0,0],[1,1,1,1,1,1,1,0,0,0],[1,1,1,1,1,1,1,1,0,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1]],"type":"mono"},
+    "pieces": ["O", "Z", "T"],
+    "data": {
+      "hold": false,
+      "requiredLines": 4,
+    },
+  }),
+  
+  new Puzzle({
+    "type": "sendLines",
+    "board": {"board":[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,1],[1,1,0,0,0,0,1,1,1,1],[1,1,1,0,0,0,1,1,1,1],[1,1,1,1,0,0,1,1,1,1],[1,1,1,1,1,0,1,1,1,1],[1,1,1,1,1,0,1,1,1,1],[1,1,1,1,1,0,1,1,1,1],[1,1,1,1,1,0,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,0,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,0]],"type":"mono"},
+    "pieces": ["O", "Z", "T"],
+    "data": {
+      "hold": false,
+      "requiredLines": 4,
+    },
+  }),
+]
+
   /*
   
   == TEMPLATE ==
@@ -1371,7 +1444,7 @@ const easyPuzzles = [
   new Puzzle({
     "type": "sendLines",
     "board": ,
-    "pieces": ["S", "T"],
+    "pieces": ["O", "Z", "T"],
     "data": {
       "hold": false,
       "requiredLines": 4,
@@ -1379,20 +1452,16 @@ const easyPuzzles = [
   }),
   
   */
-];
 
-console.log("easy puzzles: " + easyPuzzles.length);
+mirrorPuzzles(easyTSDPuzzles);
+mirrorPuzzles(twoPieceTSDPuzzles);
+mirrorPuzzles(kaidanTSDPuzzles);
 
-{
-  const originalLength = easyPuzzles.length;
-  for (let i=0; i<originalLength; i++) {
-    const c = easyPuzzles[i].cloneSelf();
-    c.mirrorSelf();
-    // console.log(c);
-    easyPuzzles.push(c);
-  }
+const mediumTSDPuzzles = [...twoPieceTSDPuzzles];
+
+const puzzles = {
+  "easyTSDPuzzles": easyTSDPuzzles,
+  "mediumTSDPuzzles": mediumTSDPuzzles,
 }
 
-console.log("easy puzzles (with mirrored): " + easyPuzzles.length);
-
-export { gameModes, easyPuzzles };
+export { gameModes, puzzles };
