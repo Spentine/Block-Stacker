@@ -39,6 +39,22 @@ const trainingPacksList = [
     },
   },
   {
+    "title": "2 Piece TSD Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "twoPieceTSDPuzzles",
+    },
+  },
+  {
+    "title": "Kaidan TSD Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "kaidanTSDPuzzles",
+    },
+  },
+  {
     "title": "Medium TSD Puzzles",
     "scene": "game-puzzleMode",
     "startParam": {
