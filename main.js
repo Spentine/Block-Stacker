@@ -244,7 +244,13 @@ function startGame(data) {
       break;
     case "puzzleMode":
       puzzleSet = data.puzzleSet;
-      currentPuzzle = Math.floor(Math.random() * puzzles[puzzleSet].length);
+      
+      const randInt = (l) => Math.floor(Math.random() * l);
+      
+      currentPuzzle = randInt(puzzles[puzzleSet].length);
+      while (data.exceptPuzzles.includes(currentPuzzle)) {
+        currentPuzzle = randInt(puzzles[puzzleSet].length);
+      };
       playSettings = puzzles[puzzleSet][currentPuzzle].outputData();
       break;
   }
@@ -303,6 +309,7 @@ function tickFrameGame() {
         startGame({
           "mode": "puzzleMode",
           "puzzleSet": puzzleSet,
+          "exceptPuzzles": [currentPuzzle],
         });
       }
     }

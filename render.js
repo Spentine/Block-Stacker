@@ -1,3 +1,5 @@
+import { gameModes, puzzles } from "./modes.js"
+
 function importImage(url) {
   return new Promise((resolve, reject) => {
     const outputImage = new Image();
@@ -36,6 +38,7 @@ const trainingPacksList = [
     "startParam": {
       "mode": "puzzleMode",
       "puzzleSet": "easyTSDPuzzles",
+      "exceptPuzzles": [],
     },
   },
   {
@@ -44,6 +47,7 @@ const trainingPacksList = [
     "startParam": {
       "mode": "puzzleMode",
       "puzzleSet": "twoPieceTSDPuzzles",
+      "exceptPuzzles": [],
     },
   },
   {
@@ -52,6 +56,16 @@ const trainingPacksList = [
     "startParam": {
       "mode": "puzzleMode",
       "puzzleSet": "kaidanTSDPuzzles",
+      "exceptPuzzles": [],
+    },
+  },
+  {
+    "title": "SZ Prop Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "SZPropPuzzles",
+      "exceptPuzzles": [],
     },
   },
   {
@@ -60,6 +74,7 @@ const trainingPacksList = [
     "startParam": {
       "mode": "puzzleMode",
       "puzzleSet": "STMBCavePuzzles",
+      "exceptPuzzles": [],
     },
   },
   {
@@ -68,6 +83,7 @@ const trainingPacksList = [
     "startParam": {
       "mode": "puzzleMode",
       "puzzleSet": "mediumTSDPuzzles",
+      "exceptPuzzles": [],
     },
   },
 ];
@@ -589,9 +605,11 @@ class GameRenderer {
     for (let i=0; i<trainingPacksList.length; i++) {
       const packButton = document.createElement("button");
       
+      const puzzleCounter = puzzles[trainingPacksList[i].startParam.puzzleSet].length;
+      
       packButton.classList.add("ui");
       packButton.classList.add("Button1");
-      packButton.innerHTML = trainingPacksList[i]["title"];
+      packButton.innerHTML = trainingPacksList[i]["title"] + ` (${puzzleCounter} puzzles)`;
       tPContainer.appendChild(packButton);
       tPArray.push(packButton);
       
@@ -957,10 +975,13 @@ class GameRenderer {
         for (let packIndex=0; packIndex<tPArray.length; packIndex++) {
           const pack = tPArray[packIndex];
           
+          const y = Math.floor(packIndex / 3);
+          const x = packIndex % 3
+          
           setBoundaries(pack, {
-            "x": (0.02 * this.uiScaling),
-            "y": (0.1 * this.uiScaling) + packIndex * (0.07 * this.uiScaling),
-            "w": (0.25 * this.uiScaling),
+            "x": (0.02 * this.uiScaling) + x * (0.31 * this.uiScaling),
+            "y": (0.1 * this.uiScaling) + y * (0.07 * this.uiScaling),
+            "w": (0.30 * this.uiScaling),
             "h": (0.06 * this.uiScaling),
           });
         }
