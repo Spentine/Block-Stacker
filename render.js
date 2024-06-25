@@ -55,6 +55,14 @@ const trainingPacksList = [
     },
   },
   {
+    "title": "STMB Cave Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "STMBCavePuzzles",
+    },
+  },
+  {
     "title": "Medium TSD Puzzles",
     "scene": "game-puzzleMode",
     "startParam": {
