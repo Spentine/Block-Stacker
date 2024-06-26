@@ -70,13 +70,13 @@ try {
   if (blockStackerStorage.userSettings) {
     userSettings = blockStackerStorage.userSettings;
   } else {
-    blockStackerStorage.userSettings = defaultUserSettings;
+    blockStackerStorage.userSettings = userSettings;
   }
   
   if (blockStackerStorage.userSettings.inGame.keyMappings) {
     userSettings.inGame.keyMappings = blockStackerStorage.userSettings.inGame.keyMappings;
   } else {
-    blockStackerStorage.userSettings.inGame.keyMappings = defaultUserSettings.inGame.keyMappings;
+    blockStackerStorage.userSettings.inGame.keyMappings = userSettings.inGame.keyMappings;
   }
   
 } catch {
