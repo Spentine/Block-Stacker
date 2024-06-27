@@ -63,13 +63,13 @@ html, body {
   cursor: not-allowed;
 }
 
-.ui.NumberInput1 {
+.ui.Input1 {
   background-color: #333333;
   font-size: 30px;
   color: #ffffff;
 }
 
-.ui.NumberInput1.unfinished {
+.ui.Input1.unfinished {
   background-color: #222222;
   cursor: not-allowed;
 }

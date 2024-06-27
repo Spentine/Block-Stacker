@@ -1,4 +1,4 @@
-import { gameModes, puzzles } from "./modes.js"
+import { gameModes, puzzles } from "./modes.js";
 
 function importImage(url) {
   return new Promise((resolve, reject) => {
@@ -86,6 +86,18 @@ const trainingPacksList = [
       "exceptPuzzles": [],
     },
   },
+  /* The world isn't ready (i have almost no puzzles)
+  
+  {
+    "title": "Miscellaneous Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "MiscPuzzles",
+      "exceptPuzzles": [],
+    },
+  },
+  */
 ];
 
 function loadSkin(skinName, skinPaths) {
@@ -335,6 +347,7 @@ class GameRenderer {
       },
       "trainMenu": {
         "container": document.getElementById("trainMenu"),
+        "trainingPackInput": document.getElementById("UI-trainingPackInput"),
         "trainingPacksContainer": document.getElementById("UI-trainingPacksContainer"),
         "trainingPacksArray": [],
         "back": document.getElementById("UI-trainMenu-back"),
@@ -992,6 +1005,13 @@ class GameRenderer {
           "w": (0.05 * this.uiScaling) * 2,
           "h": (0.05 * this.uiScaling) * 1,
         });
+        
+        setBoundaries(this.uiElem.trainMenu.trainingPackInput, {
+          "x": this.uiScaling * 0.2,
+          "y": this.uiScaling * 0.01,
+          "w": this.uiScaling * 0.5,
+          "h": this.uiScaling * 0.04,
+        })
         
         break;
         

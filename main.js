@@ -1,8 +1,8 @@
-import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/stacker.js"
-import { SRS_mono, SRS_color } from "./stacker/rs.js"
-import { GameRenderer } from "./render.js"
-import { InputHandler } from "./input.js"
-import { gameModes, puzzles } from "./modes.js"
+import { Position, Kick, Mino, Piece, RotationSystem, Stacker } from "./stacker/stacker.js";
+import { SRS_mono, SRS_color } from "./stacker/rs.js";
+import { GameRenderer } from "./render.js";
+import { InputHandler } from "./input.js";
+import { gameModes, puzzles } from "./modes.js";
 
 var userSettings = {
   "version": 1,
@@ -220,6 +220,21 @@ function DOMLoaded(event) {
     
     saveBlockStackerStorage();
     renderer.updateHandlingInputs();
+  });
+  
+  const trainingPackInput = document.getElementById('UI-trainingPackInput');
+  trainingPackInput.addEventListener("change", () => {
+    if (!puzzles[trainingPackInput.value]) {
+      trainingPackInput.value = "";
+    } else {
+      scene = "game-puzzleMode";
+      startGame({
+        "mode": "puzzleMode",
+        "puzzleSet": trainingPackInput.value,
+        "exceptPuzzles": [],
+      });
+      renderer.updateScene(scene);
+    }
   });
 }
 
