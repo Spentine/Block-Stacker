@@ -347,26 +347,12 @@ for (let i=0; i<k.length; i++) {
 }
 
 mirrorPuzzles(puzzles.easyTSDPuzzles);
-// mirrorPuzzles(twoPieceTSDPuzzles);
+mirrorPuzzles(puzzles.twoPieceTSDPuzzles);
 mirrorPuzzles(puzzles.kaidanTSDPuzzles);
 mirrorPuzzles(puzzles.STMBCavePuzzles);
 mirrorPuzzles(puzzles.SZPropPuzzles);
 mirrorPuzzles(puzzles.donationTSDPuzzles);
 
 puzzles.mediumTSDPuzzles = [...puzzles.twoPieceTSDPuzzles, ...puzzles.kaidanTSDPuzzles, ...puzzles.STMBCavePuzzles, ...puzzles.SZPropPuzzles];
-
-/*
-const puzzles = {
-  "easyTSDPuzzles": easyTSDPuzzles,
-  "twoPieceTSDPuzzles": twoPieceTSDPuzzles,
-  "kaidanTSDPuzzles": kaidanTSDPuzzles,
-  "STMBCavePuzzles": STMBCavePuzzles,
-  "SZPropPuzzles": SZPropPuzzles,
-  "mediumTSDPuzzles": mediumTSDPuzzles,
-  "donationTSDPuzzles": donationTSDPuzzles,
-  "MiscPuzzles": MiscPuzzles,
-  "MiscPuzzlesHard": MiscPuzzlesHard,
-};
-*/
 
 export { Puzzle, gameModes, puzzles };
