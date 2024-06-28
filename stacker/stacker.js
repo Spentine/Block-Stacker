@@ -841,6 +841,9 @@ class Stacker {
     if (keys.softDrop) {
       if (this.c.sdf == Infinity) { // if sdf is infinity
         const sonicFall = this.DASMove(new Position([0, 1]));
+        if (sonicFall) {
+          this.piece.spin = 0;
+        }
         this.events.softDropMovement = sonicFall;
         this.stats.score += sonicFall; // sonic drop
       } else {
@@ -864,6 +867,7 @@ class Stacker {
           if (moved) {
             this.stats.score += 1;
             this.events.softDropMovement += 1;
+            this.piece.spin = 0;
           } else {
             i = moveAmount;
           }
@@ -883,6 +887,7 @@ class Stacker {
           const moved = this.moveIfPossible(new Position([0, 1])); // move
           if (moved) {
             this.events.gravityMovement += 1;
+            this.piece.spin = 0;
           } else {
             i = moveAmount;
           }
@@ -894,10 +899,15 @@ class Stacker {
     
     if (keys.sonicDrop) {
       this.DASMove(new Position([0, 1]));
+      this.piece.spin = 0;
     }
     
     if (keys.hardDrop && !prevKeys.hardDrop && this.c.hardDropAllowed) {
-      this.stats.score += this.DASMove(new Position([0, 1])) * 2;
+      const movements = this.DASMove(new Position([0, 1]));
+      if (movements) {
+        this.stats.score += movements * 2;
+        this.piece.spin = 0;
+      }
       this.placePiece();
       this.events.hardDrop = true;
     }
