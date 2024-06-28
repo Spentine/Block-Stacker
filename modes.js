@@ -352,6 +352,7 @@ mirrorPuzzles(puzzles.kaidanTSDPuzzles);
 mirrorPuzzles(puzzles.STMBCavePuzzles);
 mirrorPuzzles(puzzles.SZPropPuzzles);
 mirrorPuzzles(puzzles.donationTSDPuzzles);
+mirrorPuzzles(puzzles.onePieceTSTPuzzles);
 
 puzzles.mediumTSDPuzzles = [...puzzles.twoPieceTSDPuzzles, ...puzzles.kaidanTSDPuzzles, ...puzzles.STMBCavePuzzles, ...puzzles.SZPropPuzzles];
 

@@ -319,7 +319,7 @@ function tickFrameGame() {
     if (game.end){
       if (game.end.ending === "noPieces") {
         console.log("Failed Puzzle " + currentPuzzle);
-        console.log(JSON.stringify(puzzleJSONs[puzzleSet][currentPuzzle]));
+        // console.log(JSON.stringify(puzzleJSONs[puzzleSet][currentPuzzle]));
         startGameSettings(puzzles[puzzleSet][currentPuzzle].outputData());
       } else {
         console.log("Passed Puzzle " + currentPuzzle);

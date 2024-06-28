@@ -94,7 +94,7 @@ const trainingPacksList = [
       "puzzleSet": "donationTSDPuzzles",
       "exceptPuzzles": [],
     },
-  }
+  },
   /* The world isn't ready (i have almost no puzzles)
   
   {
@@ -107,6 +107,15 @@ const trainingPacksList = [
     },
   },
   */
+  {
+    "title": "1 Piece TST Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "onePieceTSTPuzzles",
+      "exceptPuzzles": [],
+    },
+  },
 ];
 
 function loadSkin(skinName, skinPaths) {
