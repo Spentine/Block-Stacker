@@ -86,14 +86,23 @@ const trainingPacksList = [
       "exceptPuzzles": [],
     },
   },
-  /* The world isn't ready (i have almost no puzzles)
-  
   {
-    "title": "Miscellaneous Puzzles",
+    "title": "TSD Donations",
     "scene": "game-puzzleMode",
     "startParam": {
       "mode": "puzzleMode",
-      "puzzleSet": "MiscPuzzles",
+      "puzzleSet": "donationTSDPuzzles",
+      "exceptPuzzles": [],
+    },
+  }
+  /* The world isn't ready (i have almost no puzzles)
+  
+  {
+    "title": "Hard Miscellaneous Puzzles",
+    "scene": "game-puzzleMode",
+    "startParam": {
+      "mode": "puzzleMode",
+      "puzzleSet": "MiscPuzzlesHard",
       "exceptPuzzles": [],
     },
   },

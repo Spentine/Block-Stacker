@@ -6,6 +6,7 @@ import {
   kaidanTSDPuzzles, 
   STMBCavePuzzles, 
   SZPropPuzzles, 
+  donationTSDPuzzles, 
   MiscPuzzles,
   MiscPuzzlesHard,
 } from "./puzzles.js";
@@ -345,11 +346,13 @@ class Puzzle {
   }
 }
 
+// use a list once it gets too much
 importPuzzlesFromJSON(easyTSDPuzzles);
 importPuzzlesFromJSON(twoPieceTSDPuzzles);
 importPuzzlesFromJSON(kaidanTSDPuzzles);
 importPuzzlesFromJSON(STMBCavePuzzles);
 importPuzzlesFromJSON(SZPropPuzzles);
+importPuzzlesFromJSON(donationTSDPuzzles);
 importPuzzlesFromJSON(MiscPuzzles);
 importPuzzlesFromJSON(MiscPuzzlesHard);
 
@@ -358,6 +361,7 @@ mirrorPuzzles(twoPieceTSDPuzzles);
 mirrorPuzzles(kaidanTSDPuzzles);
 mirrorPuzzles(STMBCavePuzzles);
 mirrorPuzzles(SZPropPuzzles);
+mirrorPuzzles(donationTSDPuzzles);
 
 const mediumTSDPuzzles = [...twoPieceTSDPuzzles, ...kaidanTSDPuzzles, ...STMBCavePuzzles, ...SZPropPuzzles];
 
@@ -368,6 +372,7 @@ const puzzles = {
   "STMBCavePuzzles": STMBCavePuzzles,
   "SZPropPuzzles": SZPropPuzzles,
   "mediumTSDPuzzles": mediumTSDPuzzles,
+  "donationTSDPuzzles": donationTSDPuzzles,
   "MiscPuzzles": MiscPuzzles,
   "MiscPuzzlesHard": MiscPuzzlesHard,
 };
