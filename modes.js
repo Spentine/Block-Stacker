@@ -1,15 +1,5 @@
 import { SRS_mono, SRS_color } from "./stacker/rs.js";
-
-import {
-  easyTSDPuzzles,
-  twoPieceTSDPuzzles, 
-  kaidanTSDPuzzles, 
-  STMBCavePuzzles, 
-  SZPropPuzzles, 
-  donationTSDPuzzles, 
-  MiscPuzzles,
-  MiscPuzzlesHard,
-} from "./puzzles.js";
+import { puzzleJSONs } from "./puzzles.js";
 
 // import * as importedPuzzles from "./puzzles.json";
 
@@ -27,6 +17,7 @@ function importPuzzlesFromJSON(puzzleSet) {
   for (let i=0; i<puzzleSet.length; i++) {
     puzzleSet[i] = new Puzzle(puzzleSet[i]);
   }
+  return puzzleSet;
 }
 
 const template = {
@@ -347,24 +338,24 @@ class Puzzle {
 }
 
 // use a list once it gets too much
-importPuzzlesFromJSON(easyTSDPuzzles);
-importPuzzlesFromJSON(twoPieceTSDPuzzles);
-importPuzzlesFromJSON(kaidanTSDPuzzles);
-importPuzzlesFromJSON(STMBCavePuzzles);
-importPuzzlesFromJSON(SZPropPuzzles);
-importPuzzlesFromJSON(donationTSDPuzzles);
-importPuzzlesFromJSON(MiscPuzzles);
-importPuzzlesFromJSON(MiscPuzzlesHard);
 
-mirrorPuzzles(easyTSDPuzzles);
-mirrorPuzzles(twoPieceTSDPuzzles);
-mirrorPuzzles(kaidanTSDPuzzles);
-mirrorPuzzles(STMBCavePuzzles);
-mirrorPuzzles(SZPropPuzzles);
-mirrorPuzzles(donationTSDPuzzles);
+const puzzles = {};
 
-const mediumTSDPuzzles = [...twoPieceTSDPuzzles, ...kaidanTSDPuzzles, ...STMBCavePuzzles, ...SZPropPuzzles];
+const k = Object.keys(puzzleJSONs)
+for (let i=0; i<k.length; i++) {
+  puzzles[k[i]] = importPuzzlesFromJSON(structuredClone(puzzleJSONs[k[i]]));
+}
 
+mirrorPuzzles(puzzles.easyTSDPuzzles);
+// mirrorPuzzles(twoPieceTSDPuzzles);
+mirrorPuzzles(puzzles.kaidanTSDPuzzles);
+mirrorPuzzles(puzzles.STMBCavePuzzles);
+mirrorPuzzles(puzzles.SZPropPuzzles);
+mirrorPuzzles(puzzles.donationTSDPuzzles);
+
+puzzles.mediumTSDPuzzles = [...puzzles.twoPieceTSDPuzzles, ...puzzles.kaidanTSDPuzzles, ...puzzles.STMBCavePuzzles, ...puzzles.SZPropPuzzles];
+
+/*
 const puzzles = {
   "easyTSDPuzzles": easyTSDPuzzles,
   "twoPieceTSDPuzzles": twoPieceTSDPuzzles,
@@ -376,5 +367,6 @@ const puzzles = {
   "MiscPuzzles": MiscPuzzles,
   "MiscPuzzlesHard": MiscPuzzlesHard,
 };
+*/
 
 export { Puzzle, gameModes, puzzles };

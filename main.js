@@ -3,6 +3,7 @@ import { SRS_mono, SRS_color } from "./stacker/rs.js";
 import { GameRenderer } from "./render.js";
 import { InputHandler } from "./input.js";
 import { gameModes, puzzles } from "./modes.js";
+import { puzzleJSONs } from "./puzzles.js";
 
 var userSettings = {
   "version": 1,
@@ -318,6 +319,7 @@ function tickFrameGame() {
     if (game.end){
       if (game.end.ending === "noPieces") {
         console.log("Failed Puzzle " + currentPuzzle);
+        console.log(JSON.stringify(puzzleJSONs[puzzleSet][currentPuzzle]));
         startGameSettings(puzzles[puzzleSet][currentPuzzle].outputData());
       } else {
         console.log("Passed Puzzle " + currentPuzzle);
@@ -359,3 +361,14 @@ window.requestAnimationFrame(tickFrame);
 document.addEventListener("keydown", function (e) { inputHandler.keyDown(e) });
 document.addEventListener("keyup", function (e) { inputHandler.keyUp(e) });
 document.addEventListener("DOMContentLoaded", DOMLoaded);
+
+// testing stuff
+{
+  window.skipPuzzle = () => {
+    startGame({
+      "mode": "puzzleMode",
+      "puzzleSet": puzzleSet,
+      "exceptPuzzles": [currentPuzzle],
+    });
+  }
+}
