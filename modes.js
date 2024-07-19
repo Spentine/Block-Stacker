@@ -306,7 +306,7 @@ class Puzzle {
         "levelling": false, // overrides gravity
         "level": 1,
         
-        "lockDelay": 500, 
+        "lockDelay": Infinity, 
         
         "startingBoard": this.board.board,
         "startingQueue": this.pieces,
