@@ -102,6 +102,9 @@ function DOMLoaded(event) {
     startGame(data);
     renderer.updateScene(scene);
   }
+  renderer.updateKeybindInputs = function() {
+    inputHandler.changeInputs(userSettings.inGame.keyMappings);
+  }
   renderer.saveBlockStackerStorage = saveBlockStackerStorage;
   
   const UIStartElement = document.getElementById('UI-play');
@@ -199,7 +202,7 @@ function DOMLoaded(event) {
     renderer.updateKeybindButtons();
     
     saveBlockStackerStorage();
-    renderer.updateHandlingInputs();
+    inputHandler.changeInputs(userSettings.inGame.keyMappings);
   });
   
   const UIHandlingElement = document.getElementById('UI-handling');
@@ -220,7 +223,7 @@ function DOMLoaded(event) {
     userSettings.inGame.handling = defaultUserSettings.inGame.handling;
     
     saveBlockStackerStorage();
-    renderer.updateHandlingInputs();
+    inputHandler.changeInputs(userSettings.inGame.keyMappings);
   });
   
   const trainingPackInput = document.getElementById('UI-trainingPackInput');

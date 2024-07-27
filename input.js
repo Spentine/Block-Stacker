@@ -1,14 +1,18 @@
 class InputHandler {
   constructor(keyMap) {
-    this.keyMap = keyMap;
     this.directInterface = {}; // direct layer from input
     this.inputs = {}; // reformats direct layer to be usable
-    this.keyMapKeys = Object.keys(this.keyMap); // all keys
+    this.changeInputs(keyMap);
     
     for (let i in this.keyMapKeys) {
       this.directInterface[this.keyMapKeys[i]] = null;
       this.inputs[keyMap[this.keyMapKeys[i]]] = null;
     }
+  }
+  
+  changeInputs(keyMap) {
+    this.keyMap = keyMap;
+    this.keyMapKeys = Object.keys(this.keyMap); // all keys
   }
   
   keyDown(e) {
@@ -41,6 +45,7 @@ class InputHandler {
         }
       }
     }
+    
     return this.inputs;
   }
 }

@@ -430,6 +430,7 @@ class GameRenderer {
     this.uiScaling = 1;
     this.persistentEffects = {};
     this.saveBlockStackerStorage = function() {}
+    this.updateKeybindInputs = function() {};
     this.startGame = null;
     this.pendingKeydown = {
       "keybind": [],
@@ -578,6 +579,7 @@ class GameRenderer {
       keyButton.addEventListener("click", () => {
         delete this.userSettings.inGame.keyMappings[allKeys[keyIndex]];
         this.saveBlockStackerStorage();
+        this.updateKeybindInputs();
         this.updateKeybindButtons();
       });
     }
@@ -615,6 +617,7 @@ class GameRenderer {
           if (active && !e.repeat) {
             this.userSettings.inGame.keyMappings[e.code] = currentAction;
             this.saveBlockStackerStorage();
+            this.updateKeybindInputs();
             this.updateKeybindButtons();
             active = false;
           }
